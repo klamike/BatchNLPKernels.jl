@@ -31,7 +31,7 @@ function jac_coord_batch!(
     @lencheck length(bm.model.θ) eachrow(Θ)
     @lencheck bm.model.meta.nnzj eachrow(J)
     _assert_batch_size(batch_size, bm.batch_size)
-    backend = _get_backend(bm.model)
+    backend = _get_backend(bm)
     
     fill!(J, zero(eltype(J)))
     _jac_coord_batch!(backend, J, bm.model.cons, X, Θ)

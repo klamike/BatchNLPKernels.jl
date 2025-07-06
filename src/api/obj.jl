@@ -30,7 +30,7 @@ function obj_batch!(
     @lencheck bm.model.meta.nvar eachrow(X)
     @lencheck length(bm.model.θ) eachrow(Θ)
     _assert_batch_size(batch_size, bm.batch_size)
-    backend = _get_backend(bm.model)
+    backend = _get_backend(bm)
 
     _obj_batch(backend, obj_work, bm.model.objs, X, Θ)
     return vec(sum(obj_work, dims=1))  # FIXME

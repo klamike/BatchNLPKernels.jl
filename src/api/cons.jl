@@ -32,7 +32,7 @@ function cons_nln_batch!(
     @lencheck length(bm.model.θ) eachrow(Θ)
     @lencheck bm.model.meta.ncon eachrow(C)
     _assert_batch_size(batch_size, bm.batch_size)
-    backend = _get_backend(bm.model)
+    backend = _get_backend(bm)
 
     _cons_nln_batch!(backend, C, bm.model.cons, X, Θ)
 

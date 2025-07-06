@@ -34,7 +34,7 @@ function hess_coord_batch!(
     @lencheck bm.model.meta.ncon eachrow(Y)
     @lencheck bm.model.meta.nnzh eachrow(H)
     _assert_batch_size(batch_size, bm.batch_size)
-    backend = _get_backend(bm.model)
+    backend = _get_backend(bm)
     
     fill!(H, zero(eltype(H)))
     _obj_hess_coord_batch!(backend, H, bm.model.objs, X, Θ, obj_weight)

@@ -56,7 +56,7 @@ function grad_batch!(
     @lencheck bm.model.meta.nvar eachrow(X) eachrow(G)
     @lencheck length(bm.model.θ) eachrow(Θ)  # FIXME
     _assert_batch_size(batch_size, bm.batch_size)
-    backend = _get_backend(bm.model)
+    backend = _get_backend(bm)
     
     grad_work = _maybe_view(bm, :grad_work, X)
     

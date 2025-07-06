@@ -2,24 +2,27 @@ module BNKReactant
 
 using BatchNLPKernels
 using Reactant, KernelAbstractions
-RKA = Base.get_extension(Reactant, :ReactantKernelAbstractionsExt)
-using GPUArraysCore
 using ExaModels
 
-function to_reactant(bm::BNK.BatchModel; MT=Reactant.ConcreteRArray)
+
+function to_reactant(bm::BNK.BatchModel)
+    RKA = Base.get_extension(Reactant, :ReactantKernelAbstractionsExt)
+    if !occursin("CUDA", string(bm.model.ext.backend))
+        error("ExaModel must be built with CUDABackend")
+    end
     return BNK.BatchModel(
         bm.model,
         bm.batch_size,
-        MT(bm.obj_work),
-        MT(bm.cons_work),
-        MT(bm.cons_out),
-        MT(bm.grad_work),
-        MT(bm.grad_out),
-        MT(bm.jprod_work),
-        MT(bm.hprod_work),
-        MT(bm.jprod_out),
-        MT(bm.jtprod_out),
-        MT(bm.hprod_out),
+        Reactant.to_rarray(bm.obj_work),
+        Reactant.to_rarray(bm.cons_work),
+        Reactant.to_rarray(bm.cons_out),
+        Reactant.to_rarray(bm.grad_work),
+        Reactant.to_rarray(bm.grad_out),
+        Reactant.to_rarray(bm.jprod_work),
+        Reactant.to_rarray(bm.hprod_work),
+        Reactant.to_rarray(bm.jprod_out),
+        Reactant.to_rarray(bm.jtprod_out),
+        Reactant.to_rarray(bm.hprod_out),
         RKA.ReactantBackend(),
     )
 end
