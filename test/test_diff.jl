@@ -6,7 +6,7 @@ import FiniteDifferences
 
 
 function test_diff_gpu(model::ExaModel, batch_size::Int)
-    bm = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:full))
+    bm = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:full))
     
     nvar = model.meta.nvar
     ncon = model.meta.ncon
@@ -19,14 +19,14 @@ function test_diff_gpu(model::ExaModel, batch_size::Int)
     Θ_gpu = CLArray(Θ_cpu)
     
     @testset "obj_batch! CLArray" begin
-        y = BOI.obj_batch!(bm, X_gpu, Θ_gpu)
+        y = BNK.obj_batch!(bm, X_gpu, Θ_gpu)
         @test y isa CLArray
         @test size(y) == (batch_size,)
 
         function f_gpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.obj_batch!(bm, X, Θ))
+            return sum(BNK.obj_batch!(bm, X, Θ))
         end
         
         params = vcat(X_gpu, Θ_gpu)
@@ -38,14 +38,14 @@ function test_diff_gpu(model::ExaModel, batch_size::Int)
     ncon == 0 && return
 
     @testset "cons_nln_batch! CLArray" begin
-        y = BOI.cons_nln_batch!(bm, X_gpu, Θ_gpu)
+        y = BNK.cons_nln_batch!(bm, X_gpu, Θ_gpu)
         @test y isa CLArray
         @test size(y) == (ncon, batch_size)
 
         function f_gpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.cons_nln_batch!(bm, X, Θ))
+            return sum(BNK.cons_nln_batch!(bm, X, Θ))
         end
         
         params = vcat(X_gpu, Θ_gpu)
@@ -56,7 +56,7 @@ function test_diff_gpu(model::ExaModel, batch_size::Int)
 end
 
 function test_diff_cpu(model::ExaModel, batch_size::Int)
-    bm = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:full))
+    bm = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:full))
     
     nvar = model.meta.nvar
     ncon = model.meta.ncon
@@ -66,13 +66,13 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
     Θ_cpu = randn(nθ, batch_size)
     
     @testset "obj_batch! CPU" begin
-        y = BOI.obj_batch!(bm, X_cpu, Θ_cpu)
+        y = BNK.obj_batch!(bm, X_cpu, Θ_cpu)
         @test size(y) == (batch_size,)
 
         function f_cpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.obj_batch!(bm, X, Θ))
+            return sum(BNK.obj_batch!(bm, X, Θ))
         end
         
         params = vcat(X_cpu, Θ_cpu)
@@ -89,13 +89,13 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
     ncon == 0 && return
     
     @testset "cons_nln_batch! CPU" begin
-        y = BOI.cons_nln_batch!(bm, X_cpu, Θ_cpu)
+        y = BNK.cons_nln_batch!(bm, X_cpu, Θ_cpu)
         @test size(y) == (ncon, batch_size)
 
         function f_cpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.cons_nln_batch!(bm, X, Θ))
+            return sum(BNK.cons_nln_batch!(bm, X, Θ))
         end
         
         params = vcat(X_cpu, Θ_cpu)

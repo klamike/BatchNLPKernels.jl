@@ -31,7 +31,7 @@ end
 _get_prodhelper(bm::BatchModel) = _get_prodhelper(bm.model)
 _get_prodhelper(model::ExaModels.ExaModel) = model.ext.prodhelper
 
-_get_backend(bm::BatchModel) = _get_backend(bm.model)
+_get_backend(bm::BatchModel) = bm.backend
 _get_backend(model::ExaModels.ExaModel) = model.ext.backend
 
 function _check_buffer_available(buffer, buffer_name::Symbol)

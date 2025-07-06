@@ -75,8 +75,9 @@ Allows efficient evaluation of multiple points simultaneously.
 - `jprod_out::MT`: Batch jacobian-vector product buffer (ncon × batch_size), (0 × batch_size) if not allocated
 - `jtprod_out::MT`: Batch jacobian transpose-vector product buffer (nvar × batch_size), (0 × batch_size) if not allocated
 - `hprod_out::MT`: Batch hessian-vector product buffer (nvar × batch_size), (0 × batch_size) if not allocated
+- `backend::B`: The backend used to evaluate the model.
 """
-struct BatchModel{MT,E}
+struct BatchModel{MT,E,B}
     model::E
     batch_size::Int
 
@@ -90,6 +91,8 @@ struct BatchModel{MT,E}
     jprod_out::MT
     jtprod_out::MT
     hprod_out::MT
+
+    backend::B
 end
 
 """
@@ -147,6 +150,7 @@ function BatchModel(model::ExaModels.ExaModel{T,VT,E,O,C}, batch_size::Int; conf
         jprod_out,
         jtprod_out,
         hprod_out,
+        _get_backend(model),
     )
 end
 
