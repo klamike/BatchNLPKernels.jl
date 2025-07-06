@@ -87,3 +87,33 @@ function shessian_batch!(
         kerh2_batch(backend)(y1, y2, f.f, f.itr, X, Θ, adj, adj2; ndrange = (length(f.itr), batch_size))
     end
 end
+
+function shessian_batch!(
+    backend::Nothing,
+    y1,
+    y2,
+    f,
+    X,
+    Θ,
+    adj,
+    adj2,
+)
+    if !isempty(f.itr)
+        kerh_batch_cpu!(y1, y2, f.f, f.itr, X, Θ, adj, adj2)
+    end
+end
+
+function shessian_batch!(
+    backend::Nothing,
+    y1,
+    y2,
+    f,
+    X,
+    Θ,
+    adj::AbstractMatrix,
+    adj2,
+)
+    if !isempty(f.itr)
+        kerh2_batch_cpu!(y1, y2, f.f, f.itr, X, Θ, adj, adj2)
+    end
+end

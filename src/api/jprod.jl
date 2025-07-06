@@ -45,15 +45,7 @@ function jprod_nln_batch!(
     jac_coord_batch!(bm, X, Θ, J_batch)
     
     fill!(Jv, zero(eltype(Jv)))
-    kerspmv_batch(bm.model.ext.backend)(
-        Jv,
-        V,
-        ph.jacsparsityi,
-        J_batch,
-        ph.jacptri;
-        ndrange = (length(ph.jacptri) - 1, batch_size),
-    )
-    synchronize(bm.model.ext.backend)
+    _run_kerspmv_batch!(bm.model.ext.backend, Jv, V, ph.jacsparsityi, J_batch, ph.jacptri, batch_size)
     
     return Jv
 end
@@ -107,15 +99,15 @@ function jtprod_nln_batch!(
     jac_coord_batch!(bm, X, Θ, J_batch)
     
     fill!(Jtv, zero(eltype(Jtv)))
-    kerspmv2_batch(backend)(
+    _run_kerspmv2_batch!(
+        backend,
         Jtv,
         V,
         ph.jacsparsityj,
         J_batch,
-        ph.jacptrj;
-        ndrange = (length(ph.jacptrj) - 1, batch_size),
+        ph.jacptrj,
+        batch_size,
     )
-    synchronize(backend)
     
     return Jtv
 end

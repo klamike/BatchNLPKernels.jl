@@ -43,25 +43,25 @@ function hprod_batch!(
     hess_coord_batch!(bm, X, Θ, Y, H_batch; obj_weight=obj_weight)
     
     fill!(Hv, zero(eltype(Hv)))
-    kersyspmv_batch(backend)(
+    _run_kersyspmv_batch!(
+        backend,
         Hv,
         V,
         ph.hesssparsityi,
         H_batch,
-        ph.hessptri;
-        ndrange = (length(ph.hessptri) - 1, batch_size),
+        ph.hessptri,
+        batch_size,
     )
-    synchronize(backend)
-    
-    kersyspmv2_batch(backend)(
+
+    _run_kersyspmv2_batch!(
+        backend,
         Hv,
         V,
         ph.hesssparsityj,
         H_batch,
-        ph.hessptrj;
-        ndrange = (length(ph.hessptrj) - 1, batch_size),
+        ph.hessptrj,
+        batch_size,
     )
-    synchronize(backend)
     
     return Hv
 end

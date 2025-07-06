@@ -41,14 +41,14 @@ function cons_nln_batch!(
     _conaugs_batch!(backend, conbuffers_batch, bm.model.cons, X, Θ)
     
     if length(bm.model.ext.conaugptr) > 1
-        compress_to_dense_batch(backend)(
+        _run_compress_to_dense_batch!(
+            backend,
             C,
             conbuffers_batch,
             bm.model.ext.conaugptr,
-            bm.model.ext.conaugsparsity;
-            ndrange = (length(bm.model.ext.conaugptr) - 1, batch_size),
+            bm.model.ext.conaugsparsity,
+            batch_size,
         )
-        synchronize(backend)
     end
     return C
 end
@@ -60,6 +60,12 @@ function _cons_nln_batch!(backend, C, con::ExaModels.Constraint, X, Θ)
     end
     _cons_nln_batch!(backend, C, con.inner, X, Θ)
     synchronize(backend)
+end
+function _cons_nln_batch!(::Nothing, C, con::ExaModels.Constraint, X, Θ)
+    if !isempty(con.itr)
+        kerf_batch_cpu!(C, con.f, con.itr, X, Θ)
+    end
+    _cons_nln_batch!(backend, C, con.inner, X, Θ)
 end
 function _cons_nln_batch!(backend, C, con::ExaModels.ConstraintNull, X, Θ) end
 function _cons_nln_batch!(backend, C, con::ExaModels.ConstraintAug, X, Θ)
@@ -73,6 +79,12 @@ function _conaugs_batch!(backend, conbuffers, con::ExaModels.ConstraintAug, X, �
     end
     _conaugs_batch!(backend, conbuffers, con.inner, X, Θ)
     synchronize(backend)
+end
+function _conaugs_batch!(::Nothing, conbuffers, con::ExaModels.ConstraintAug, X, Θ)
+    if !isempty(con.itr)
+        kerf2_batch_cpu!(conbuffers, con.f, con.itr, X, Θ, con.oa)
+    end
+    _conaugs_batch!(backend, conbuffers, con.inner, X, Θ)
 end
 function _conaugs_batch!(backend, conbuffers, con::ExaModels.Constraint, X, Θ)
     _conaugs_batch!(backend, conbuffers, con.inner, X, Θ)

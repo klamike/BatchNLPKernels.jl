@@ -1,6 +1,7 @@
 module BatchNLPKernels
 
 using ExaModels
+using LinearAlgebra
 using KernelAbstractions
 
 const ExaKA = Base.get_extension(ExaModels, :ExaModelsKernelAbstractions)

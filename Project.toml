@@ -6,6 +6,7 @@ version = "1.0.0-DEV"
 [deps]
 ExaModels = "1037b233-b668-4ce9-9b63-f9f681f55dd2"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [weakdeps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"

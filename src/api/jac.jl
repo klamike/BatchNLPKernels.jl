@@ -59,3 +59,17 @@ function sjacobian_batch!(
         kerj_batch(backend)(y1, y2, f.f, f.itr, X, Θ, adj; ndrange = (length(f.itr), batch_size))
     end
 end
+
+function sjacobian_batch!(
+    ::Nothing,
+    y1,
+    y2,
+    f,
+    X,
+    Θ,
+    adj,
+)
+    if !isempty(f.itr)
+        kerj_batch_cpu!(y1, y2, f.f, f.itr, X, Θ, adj)
+    end
+end

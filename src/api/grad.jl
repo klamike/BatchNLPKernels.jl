@@ -39,6 +39,18 @@ function sgradient_batch!(
         kerg_batch(backend)(Y, f.f, f.itr, X, Θ, adj; ndrange = (length(f.itr), batch_size))
     end
 end
+function sgradient_batch!(
+    ::Nothing,
+    Y,
+    f,
+    X,
+    Θ,
+    adj,
+)
+    if !isempty(f.itr)
+        kerg_batch_cpu!(Y, f.f, f.itr, X, Θ, adj)
+    end
+end
 
 """
     grad_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, G::AbstractMatrix)
@@ -66,14 +78,14 @@ function grad_batch!(
         _grad_batch!(backend, grad_work, bm.model.objs, X, Θ)
         
         fill!(G, zero(eltype(G)))
-        compress_to_dense_batch(backend)(
+        _run_compress_to_dense_batch!(
+            backend,
             G,
             grad_work,
             bm.model.ext.gptr,
-            bm.model.ext.gsparsity;
-            ndrange = (length(bm.model.ext.gptr) - 1, batch_size),
+            bm.model.ext.gsparsity,
+            batch_size,
         )
-        synchronize(backend)
     end
     
     return G

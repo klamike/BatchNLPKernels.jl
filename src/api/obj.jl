@@ -44,4 +44,10 @@ function _obj_batch(backend, obj_work, obj, X, Θ)
     _obj_batch(backend, obj_work, obj.inner, X, Θ)
     synchronize(backend)
 end
+function _obj_batch(::Nothing, obj_work, obj, X, Θ)
+    if !isempty(obj.itr)
+        kerf_batch_cpu!(obj_work, obj.f, obj.itr, X, Θ)
+    end
+    _obj_batch(backend, obj_work, obj.inner, X, Θ)
+end
 function _obj_batch(backend, obj_work, f::ExaModels.ObjectiveNull, X, Θ) end
