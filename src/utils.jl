@@ -41,9 +41,3 @@ function _check_buffer_available(buffer, buffer_name::Symbol)
     end
     return buffer
 end
-
-function _copyto_backend(backend, v)
-    arr = KA.allocate(backend, eltype(v), length(v)) 
-    copyto!(arr, v)
-    return arr
-end
