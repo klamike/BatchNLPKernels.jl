@@ -18,30 +18,80 @@ struct Interval{VT} <: AbstractSet
     u::VT
 end
 
-@inline distance_to_set(v, s) = distance_to_set(DefaultDistance(), v, s)
-@inline distance_to_set(::DefaultDistance, v, s::S) where {S} = distance_to_set(EpigraphViolationDistance(), v, s)
-@inline distance_to_set(::NormedEpigraphDistance{p}, s::S) where {p,S} = LinearAlgebra.norm(distance_to_set(EpigraphViolationDistance(), v, s), p)
+@inline violation(v, s) = violation(DefaultDistance(), v, s)
+@inline violation(::DefaultDistance, v, s::S) where {S} = violation(EpigraphViolationDistance(), v, s)
+@inline violation(::NormedEpigraphDistance{p}, s::S) where {p,S} = LinearAlgebra.norm(violation(EpigraphViolationDistance(), v, s), p)
 
-distance_to_set!(d, v, s) = begin
-    d .= distance_to_set(DefaultDistance(), v, s)
+violation!(d, v, s) = begin
+    d .= violation(DefaultDistance(), v, s)
 end
-distance_to_set!(::DefaultDistance, d, v, s::S) where {S} = begin
-    d .= distance_to_set(EpigraphViolationDistance(), v, s)
+violation!(::DefaultDistance, d, v, s::S) where {S} = begin
+    d .= violation(EpigraphViolationDistance(), v, s)
 end
-distance_to_set!(::NormedEpigraphDistance{p}, d, v, s::S) where {p,S} = begin
-    d .= LinearAlgebra.norm(distance_to_set(EpigraphViolationDistance(), v, s), p)
+violation!(::NormedEpigraphDistance{p}, d, v, s::S) where {p,S} = begin
+    d .= LinearAlgebra.norm(violation(EpigraphViolationDistance(), v, s), p)
 end
 
 
-@inline distance_to_set(::EpigraphViolationDistance, s::LessThan) = begin
+@inline violation(::EpigraphViolationDistance, s::LessThan) = begin
     @. max(v - s.u, zero(v))
 end
-@inline distance_to_set(::EpigraphViolationDistance, s::GreaterThan) = begin
+@inline violation(::EpigraphViolationDistance, s::GreaterThan) = begin
     @. max(s.l - v, zero(v))
 end
-@inline distance_to_set(::EpigraphViolationDistance, s::EqualTo) = begin
+@inline violation(::EpigraphViolationDistance, s::EqualTo) = begin
     @. abs(v - s.v)
 end
-@inline distance_to_set(::EpigraphViolationDistance, s::Interval) = begin
+@inline violation(::EpigraphViolationDistance, s::Interval) = begin
     @. max(s.l - v, v - s.u, zero(v))
+end
+
+# FIXME is interval slow?
+struct BatchViolation{MT,E}
+    model::E
+    batch_size::Int
+
+    # constraints
+    in_cons_out::MT
+    in_cons::Interval
+    
+    # variable bounds
+    in_vars_out::MT
+    in_vars::Interval
+end
+
+function BatchViolation(model::E, batch_size::Int) where {E}
+    lcon = model.meta.lcon
+    ucon = model.meta.ucon
+
+    in_cons_out = similar(lcon, length(lcon), batch_size)
+    in_cons = Interval(lcon, ucon)
+
+    lvar = model.meta.lvar
+    uvar = model.meta.uvar
+
+    in_vars_out = similar(lvar, length(lvar), batch_size)
+    in_vars = Interval(lvar, uvar)
+
+    return BatchViolation(
+        model, batch_size,
+        in_cons_out, in_cons,
+        in_vars_out, in_vars
+    )
+end
+
+
+function _constraint_violations!(b::BatchViolation, V::AbstractMatrix)
+    violation!.(eachcol(b.in_cons_out), eachcol(V), Ref(b.in_cons))
+end
+
+function all_violations!(bm::BatchModel, b::BatchViolation, X::AbstractMatrix)
+    V = cons_nln_batch!(bm, X, Θ)
+    _constraint_violations!(b, V)
+    violation!.(eachcol(b.in_vars_out), eachcol(X), Ref(b.in_vars))
+end
+function all_violations!(bm::BatchModel, b::BatchViolation, X::AbstractMatrix, Θ::AbstractMatrix)
+    V = cons_nln_batch!(bm, X, Θ)
+    _constraint_violations!(b, V)
+    violation!.(eachcol(b.in_vars_out), eachcol(X), Ref(b.in_vars))
 end
