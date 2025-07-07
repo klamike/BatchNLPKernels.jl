@@ -1,10 +1,3 @@
-using DifferentiationInterface
-const DI = DifferentiationInterface
-
-import Zygote
-import FiniteDifferences
-
-
 function test_diff_gpu(model::ExaModel, batch_size::Int)
     bm = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:full))
     
@@ -111,7 +104,7 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
 end
 
 
-@testset "AD rules" begin
+@testset "AD rules - Luksan" begin
     cpu_models, names = create_luksan_models(CPU())
     gpu_models, _ = create_luksan_models(OpenCLBackend())
     
@@ -119,6 +112,26 @@ end
         @testset "$name Model" begin
             for batch_size in [1, 4]
                 @testset "Batch Size $batch_size" begin
+                    @testset "CPU Diff" begin
+                        test_diff_cpu(cpu_model, batch_size)
+                    end
+                    @testset "GPU Diff" begin
+                        test_diff_gpu(gpu_model, batch_size)
+                    end
+                end
+            end
+        end
+    end
+end
+
+@testset "AD rules - Power" begin
+    cpu_models_p, names_p = create_power_models(CPU())
+    gpu_models_p, _       = create_power_models(OpenCLBackend())
+
+    for (name, (cpu_model, gpu_model)) in zip(names_p, zip(cpu_models_p, gpu_models_p))
+        @testset "$(name) Model" begin
+            for batch_size in [1, 4]
+                @testset "Batch Size $(batch_size)" begin
                     @testset "CPU Diff" begin
                         test_diff_cpu(cpu_model, batch_size)
                     end

@@ -165,7 +165,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
     end
 end
 
-@testset "API" begin
+@testset "API - Luksan" begin
     models, names = create_luksan_models()
     
     for (name, model) in zip(names, models)
@@ -173,6 +173,20 @@ end
             for batch_size in [1, 2, 4]
                 @testset "Batch Size $batch_size" begin
                     test_batch_model(model, batch_size, atol=1e-5, rtol=1e-5)
+                end
+            end
+        end
+    end
+end
+
+@testset "API - Power" begin
+    models_p, names_p = create_power_models()
+
+    for (name, model) in zip(names_p, models_p)
+        @testset "$(name) Model" begin
+            for batch_size in [1, 2, 4]
+                @testset "Batch Size $(batch_size)" begin
+                    test_batch_model(model, batch_size; atol=1e-5, rtol=1e-5)
                 end
             end
         end
