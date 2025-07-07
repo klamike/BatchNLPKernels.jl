@@ -9,7 +9,6 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
     X = OpenCL.randn(nvar, batch_size)
     Θ = OpenCL.randn(nθ, batch_size)
 
-    # FIXME: add acopf since luksan doesn't have bounds
     OpenCL.@allowscalar if !isempty(model.meta.lvar) && !isempty(model.meta.uvar)
         if isfinite(model.meta.lvar[1])
             X[1, :] .= model.meta.lvar[1] - 0.1
