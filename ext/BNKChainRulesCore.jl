@@ -56,4 +56,54 @@ function ChainRulesCore.rrule(::typeof(BatchNLPKernels.cons_nln_batch!), bm::Bat
     return y, cons_nln_batch_pullback
 end
 
+
+function ChainRulesCore.rrule(::typeof(BatchNLPKernels.constraint_violations!), bm::BatchModel, V)
+    Vc = BatchNLPKernels.constraint_violations!(bm, V)
+    
+    function constraint_violations_pullback(V̄c)
+        V̄c = ChainRulesCore.unthunk(V̄c)
+        
+        # violation(v, s) = max(s.l - v, v - s.u, 0)
+        # ∂violation/∂v = -1 if v < s.l, +1 if v > s.u, 0 otherwise
+        
+        V̄ = if isempty(bm.viols_cons)
+            zeros(eltype(V), size(V))
+        else
+            lcon = bm.viols_cons.l
+            ucon = bm.viols_cons.u
+            lower_viols = (lcon === nothing || isempty(lcon)) ? falses(size(V)) : V .< lcon
+            upper_viols = (ucon === nothing || isempty(ucon)) ? falses(size(V)) : V .> ucon
+            lower_viols .* (-V̄c) .+ upper_viols .* V̄c
+        end
+        
+        return ChainRulesCore.NoTangent(), ChainRulesCore.NoTangent(), V̄
+    end
+    
+    return Vc, constraint_violations_pullback
+end
+function ChainRulesCore.rrule(::typeof(BatchNLPKernels.bound_violations!), bm::BatchModel, X)
+    Vb = BatchNLPKernels.bound_violations!(bm, X)
+    
+    function bound_violations_pullback(V̄b)
+        V̄b = ChainRulesCore.unthunk(V̄b)
+        
+        # violation(x, s) = max(s.l - x, x - s.u, 0)
+        # ∂violation/∂x = -1 if x < s.l, +1 if x > s.u, 0 otherwise
+        
+        X̄ = if isempty(bm.viols_vars)
+            zeros(eltype(X), size(X))
+        else
+            lvar = bm.viols_vars.l
+            uvar = bm.viols_vars.u
+            lower_viols = (lvar === nothing || isempty(lvar)) ? falses(size(X)) : X .< lvar
+            upper_viols = (uvar === nothing || isempty(uvar)) ? falses(size(X)) : X .> uvar
+            lower_viols .* (-V̄b) .+ upper_viols .* V̄b
+        end
+        
+        return ChainRulesCore.NoTangent(), ChainRulesCore.NoTangent(), X̄
+    end
+    
+    return Vb, bound_violations_pullback
+end
+
 end # module BNKChainRulesCore 
