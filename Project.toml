@@ -10,12 +10,10 @@ KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 [weakdeps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
 [extensions]
 BNKChainRulesCore = "ChainRulesCore"
 BNKJuMP = "JuMP"
-BNKMathOptInterface = "MathOptInterface"
 
 [compat]
 ExaModels = "0.8.3"
