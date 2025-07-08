@@ -77,4 +77,4 @@ Base.isempty(s::Interval{VT}) where {VT} = isempty(s.l) || isempty(s.u)
 Interval(::Nothing) = Interval()
 Interval() = Interval(nothing, nothing)
 Base.isempty(::Interval{Nothing}) = true
-_violation(v, ::Interval{Nothing}) = zero(v)
+@inline _violation(v, ::Interval{Nothing}) = zero(v)
