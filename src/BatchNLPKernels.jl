@@ -6,7 +6,6 @@ using KernelAbstractions
 const ExaKA = Base.get_extension(ExaModels, :ExaModelsKernelAbstractions)
 const KAExtension = ExaKA.KAExtension
 
-include("sets.jl")
 include("batch_model.jl")
 
 const BOI = BatchNLPKernels
@@ -24,4 +23,5 @@ include("api/obj.jl")
 include("api/jprod.jl")
 include("api/hprod.jl")
 include("api/viols.jl")
+
 end # module BatchNLPKernels
