@@ -272,32 +272,32 @@ function test_violations_config_errors(MOD=OpenCL)
     end
 end
 
-# @testset "Violations API - Luksan" begin
-#     @testset "Config Errors" begin
-#         test_violations_config_errors(OpenCL)
-#     end
+@testset "Violations API - Luksan" begin
+    @testset "Config Errors" begin
+        test_violations_config_errors(OpenCL)
+    end
     
-#     cpu_models, names = create_luksan_models(CPU())
-#     gpu_models, _ = create_luksan_models(OpenCLBackend())
+    cpu_models, names = create_luksan_models(CPU())
+    gpu_models, _ = create_luksan_models(OpenCLBackend())
     
-#     for (name, (cpu_model, gpu_model)) in zip(names, zip(cpu_models, gpu_models))
-#         @testset "$name Model" begin
-#             for batch_size in [1, 4]
-#                 @testset "Batch Size $batch_size" begin
-#                     @testset "Correctness" begin
-#                         test_violations_correctness(gpu_model, batch_size, atol=1e-5, rtol=1e-5)
-#                     end
-#                     @testset "CPU Differentiability" begin
-#                         test_violations_differentiability_cpu(cpu_model, batch_size)
-#                     end
-#                     @testset "GPU Differentiability" begin
-#                         test_violations_differentiability_gpu(gpu_model, batch_size)
-#                     end
-#                 end
-#             end
-#         end
-#     end
-# end
+    for (name, (cpu_model, gpu_model)) in zip(names, zip(cpu_models, gpu_models))
+        @testset "$name Model" begin
+            for batch_size in [1, 4]
+                @testset "Batch Size $batch_size" begin
+                    @testset "Correctness" begin
+                        test_violations_correctness(gpu_model, batch_size, atol=1e-5, rtol=1e-5)
+                    end
+                    @testset "CPU Differentiability" begin
+                        test_violations_differentiability_cpu(cpu_model, batch_size)
+                    end
+                    @testset "GPU Differentiability" begin
+                        test_violations_differentiability_gpu(gpu_model, batch_size)
+                    end
+                end
+            end
+        end
+    end
+end
 
 @testset "Violations API - Power" begin
     cpu_models_p, names_p = create_power_models(CPU())
