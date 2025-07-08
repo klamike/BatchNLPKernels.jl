@@ -60,8 +60,8 @@ end
 function ChainRulesCore.rrule(::typeof(BatchNLPKernels.constraint_violations!), bm::BatchModel, V)
     Vc = BatchNLPKernels.constraint_violations!(bm, V)
     
-    function constraint_violations_pullback(V̄c)
-        V̄c = ChainRulesCore.unthunk(V̄c)
+    function constraint_violations_pullback(Ȳ)
+        Ȳ = ChainRulesCore.unthunk(Ȳ)
         
         # violation(v, s) = max(s.l - v, v - s.u, 0)
         # ∂violation/∂v = -1 if v < s.l, +1 if v > s.u, 0 otherwise
@@ -69,11 +69,9 @@ function ChainRulesCore.rrule(::typeof(BatchNLPKernels.constraint_violations!), 
         V̄ = if isempty(bm.viols_cons)
             zeros(eltype(V), size(V))
         else
-            lcon = bm.viols_cons.l
-            ucon = bm.viols_cons.u
-            lower_viols = (lcon === nothing || isempty(lcon)) ? falses(size(V)) : V .< lcon
-            upper_viols = (ucon === nothing || isempty(ucon)) ? falses(size(V)) : V .> ucon
-            lower_viols .* (-V̄c) .+ upper_viols .* V̄c
+            lower_viols = V .< bm.viols_cons.l
+            upper_viols = V .> bm.viols_cons.u
+            lower_viols .* (-Ȳ) .+ upper_viols .* Ȳ
         end
         
         return ChainRulesCore.NoTangent(), ChainRulesCore.NoTangent(), V̄
@@ -84,8 +82,8 @@ end
 function ChainRulesCore.rrule(::typeof(BatchNLPKernels.bound_violations!), bm::BatchModel, X)
     Vb = BatchNLPKernels.bound_violations!(bm, X)
     
-    function bound_violations_pullback(V̄b)
-        V̄b = ChainRulesCore.unthunk(V̄b)
+    function bound_violations_pullback(Ȳ)
+        Ȳ = ChainRulesCore.unthunk(Ȳ)
         
         # violation(x, s) = max(s.l - x, x - s.u, 0)
         # ∂violation/∂x = -1 if x < s.l, +1 if x > s.u, 0 otherwise
@@ -93,11 +91,9 @@ function ChainRulesCore.rrule(::typeof(BatchNLPKernels.bound_violations!), bm::B
         X̄ = if isempty(bm.viols_vars)
             zeros(eltype(X), size(X))
         else
-            lvar = bm.viols_vars.l
-            uvar = bm.viols_vars.u
-            lower_viols = (lvar === nothing || isempty(lvar)) ? falses(size(X)) : X .< lvar
-            upper_viols = (uvar === nothing || isempty(uvar)) ? falses(size(X)) : X .> uvar
-            lower_viols .* (-V̄b) .+ upper_viols .* V̄b
+            lower_viols = X .< bm.viols_vars.l
+            upper_viols = X .> bm.viols_vars.u
+            lower_viols .* (-Ȳ) .+ upper_viols .* Ȳ
         end
         
         return ChainRulesCore.NoTangent(), ChainRulesCore.NoTangent(), X̄

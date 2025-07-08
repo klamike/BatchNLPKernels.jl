@@ -40,14 +40,14 @@ function constraint_violations!(bm::BatchModel, V::AbstractMatrix)
 end
 
 """
-    bound_violations!(bm::BatchModel, V::AbstractMatrix)
+    bound_violations!(bm::BatchModel, X::AbstractMatrix)
 
 Compute variable violations for a batch of variable primal values.
 """
-function bound_violations!(bm::BatchModel, V::AbstractMatrix)
-    viols_vars_out = _maybe_view(bm, :viols_vars_out, V)
+function bound_violations!(bm::BatchModel, X::AbstractMatrix)
+    viols_vars_out = _maybe_view(bm, :viols_vars_out, X)
     
-    _violation!.(eachcol(viols_vars_out), eachcol(V), bm.viols_vars)
+    _violation!.(eachcol(viols_vars_out), eachcol(X), bm.viols_vars)
 
     return viols_vars_out
 end
