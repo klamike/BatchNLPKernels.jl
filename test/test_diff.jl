@@ -1,19 +1,15 @@
-function test_diff_gpu(model::ExaModel, batch_size::Int)
+function test_diff_gpu(model::ExaModel, batch_size::Int; MOD=OpenCL)
     bm = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:full))
     
     nvar = model.meta.nvar
     ncon = model.meta.ncon
     nθ = length(model.θ)
     
-    X_cpu = randn(nvar, batch_size)
-    Θ_cpu = randn(nθ, batch_size)
-    
-    X_gpu = CLArray(X_cpu)
-    Θ_gpu = CLArray(Θ_cpu)
-    
-    @testset "obj_batch! CLArray" begin
+    X_gpu = MOD.randn(nvar, batch_size)
+    Θ_gpu = MOD.randn(nθ, batch_size)
+
+    @testset "obj_batch!" begin
         y = BOI.obj_batch!(bm, X_gpu, Θ_gpu)
-        @test y isa CLArray
         @test size(y) == (batch_size,)
 
         function f_gpu(params)
@@ -24,15 +20,14 @@ function test_diff_gpu(model::ExaModel, batch_size::Int)
         
         params = vcat(X_gpu, Θ_gpu)
         grad = DI.gradient(f_gpu, AutoZygote(), params)
-        @test grad isa AbstractMatrix && grad isa CLArray
+        @test grad isa AbstractMatrix
         @test size(grad) == size(params)
     end
     
     ncon == 0 && return
 
-    @testset "cons_nln_batch! CLArray" begin
+    @testset "cons_nln_batch!" begin
         y = BOI.cons_nln_batch!(bm, X_gpu, Θ_gpu)
-        @test y isa CLArray
         @test size(y) == (ncon, batch_size)
 
         function f_gpu(params)
@@ -43,7 +38,7 @@ function test_diff_gpu(model::ExaModel, batch_size::Int)
         
         params = vcat(X_gpu, Θ_gpu)
         grad = DI.gradient(f_gpu, AutoZygote(), params)
-        @test grad isa AbstractMatrix && grad isa CLArray
+        @test grad isa AbstractMatrix
         @test size(grad) == size(params)
     end
 end
@@ -135,8 +130,43 @@ end
                     @testset "CPU Diff" begin
                         test_diff_cpu(cpu_model, batch_size)
                     end
-                    @testset "GPU Diff" begin
+                    @testset "OpenCL Diff" begin
                         test_diff_gpu(gpu_model, batch_size)
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+if haskey(ENV, "BNK_TEST_CUDA")
+    @testset "AD rules - Luksan - CUDA" begin
+        gpu_models, names = create_luksan_models(CUDABackend())
+        
+        for (name, gpu_model) in zip(names, gpu_models)
+            @testset "$name Model" begin
+                for batch_size in [1, 4]
+                    @testset "Batch Size $batch_size" begin
+                        @testset "GPU Diff" begin
+                            test_diff_gpu(gpu_model, batch_size, MOD=CUDA)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    @testset "AD rules - Power - CUDA" begin
+        gpu_models_p, names_p = create_power_models(CUDABackend())
+    
+        for (name, gpu_model) in zip(names_p, gpu_models_p)
+            @testset "$(name) Model" begin
+                for batch_size in [1, 4]
+                    @testset "Batch Size $(batch_size)" begin
+                        @testset "OpenCL Diff" begin
+                            test_diff_gpu(gpu_model, batch_size, MOD=CUDA)
+                        end
                     end
                 end
             end

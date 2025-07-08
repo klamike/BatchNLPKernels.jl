@@ -20,8 +20,10 @@ ExaModels = "0.8.3"
 
 [extras]
 AcceleratedKernels = "6a4ca0a5-0e36-4168-a932-d9be78d558f1"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
+GPUArraysCore = "46192b85-c4d5-4398-a991-12ede77f4527"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OpenCL = "08131aa3-fb12-5dee-8b74-c09406e224a2"
 PGLib = "07a8691f-3d11-4330-951b-3c50f98338be"
@@ -31,4 +33,4 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 pocl_jll = "627d6b7a-bbe6-5189-83e7-98cc0a5aeadd"
 
 [targets]
-test = ["Test", "LinearAlgebra", "OpenCL", "pocl_jll", "AcceleratedKernels", "DifferentiationInterface", "FiniteDifferences", "Zygote", "PGLib", "PowerModels"]
+test = ["Test", "CUDA", "GPUArraysCore", "LinearAlgebra", "OpenCL", "pocl_jll", "AcceleratedKernels", "DifferentiationInterface", "FiniteDifferences", "Zygote", "PGLib", "PowerModels"]

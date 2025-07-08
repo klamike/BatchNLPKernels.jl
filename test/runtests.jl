@@ -24,6 +24,13 @@ function Base.findall(f::F, bitarray::CLArray) where {F<:Function}
 end
 Base.findall(bitarray::CLArray) = Base.findall(identity, bitarray)
 
+import GPUArraysCore: @allowscalar
+
+if haskey(ENV, "BNK_TEST_CUDA")
+    using CUDA
+    @info "CUDA detected"
+end
+
 
 include("luksan.jl")
 include("power.jl")
