@@ -34,7 +34,7 @@ Compute constraint violations for a batch of constraint primal values.
 function constraint_violations!(bm::BatchModel, V::AbstractMatrix)
     viols_cons_out = _maybe_view(bm, :viols_cons_out, V)
     
-    violation!.(eachcol(viols_cons_out), eachcol(V), bm.viols_cons)
+    _violation!.(eachcol(viols_cons_out), eachcol(V), bm.viols_cons)
 
     return viols_cons_out
 end
@@ -47,23 +47,34 @@ Compute variable violations for a batch of variable primal values.
 function bound_violations!(bm::BatchModel, V::AbstractMatrix)
     viols_vars_out = _maybe_view(bm, :viols_vars_out, V)
     
-    violation!.(eachcol(viols_vars_out), eachcol(V), bm.viols_vars)
+    _violation!.(eachcol(viols_vars_out), eachcol(V), bm.viols_vars)
 
     return viols_vars_out
 end
 
-"""
-    violation!(d, v, s::S) where {S}
-
-Store the distance between the point `v` and the set `s` in `d`.
-"""
-@inline violation!(d, v, s::S) where {S} = begin
-    d .= violation(v, s)
+@inline _violation!(d, v, s::S) where {S} = begin
+    d .= _violation(v, s)
 end
 
-"""
-    violation(v, s::S) where {S}
 
-Compute the distance between the point `v` and the set `s`.
 """
-function violation end
+    Interval{VT}
+
+Represents the RHS of M constraints g(xᵢ) ∈ [lᵢ, uᵢ]  ∀i ∈ 1:M.
+"""
+struct Interval{VT}
+    l::VT
+    u::VT
+end
+@inline _violation(v, s::Interval{VT}) where {VT} = begin
+    @. max(s.l - v, v - s.u, zero(v))
+end
+
+Base.broadcastable(s::Interval) = Ref(s)
+Base.isempty(s::Interval{VT}) where {VT} = isempty(s.l) || isempty(s.u)
+
+# empty support (unconstrained)
+Interval(::Nothing) = Interval()
+Interval() = Interval(nothing, nothing)
+Base.isempty(::Interval{Nothing}) = true
+_violation(v, ::Interval{Nothing}) = zero(v)
