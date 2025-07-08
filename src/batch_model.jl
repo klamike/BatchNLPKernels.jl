@@ -96,7 +96,7 @@ Allows efficient evaluation of multiple points simultaneously.
 - `viols_cons::Interval`: Constraint bounds as interval set
 - `viols_vars::Interval`: Variable bounds as interval set
 """
-struct BatchModel{MT,E,C,V} # FIXME: C,V needed?
+struct BatchModel{MT,E}
     model::E
     batch_size::Int
 
@@ -113,8 +113,8 @@ struct BatchModel{MT,E,C,V} # FIXME: C,V needed?
 
     viols_cons_out::MT
     viols_vars_out::MT
-    viols_cons::Interval{C}
-    viols_vars::Interval{V}
+    viols_cons::Interval
+    viols_vars::Interval
 end
 
 """
