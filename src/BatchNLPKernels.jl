@@ -9,8 +9,8 @@ const KAExtension = ExaKA.KAExtension
 include("interval.jl")
 include("batch_model.jl")
 
-const BOI = BatchNLPKernels
-export BOI, BatchModel, BatchModelConfig
+const BNK = BatchNLPKernels
+export BNK, BatchModel, BatchModelConfig
 export objective!, objective_gradient!, constraints!, constraints_jacobian!, lagrangian_hessian!
 export constraints_jprod!, constraints_jtprod!, lagrangian_hprod!
 export all_violations!, constraint_violations!, bound_violations!
