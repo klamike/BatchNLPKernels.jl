@@ -5,6 +5,8 @@ function test_batch_model(model::ExaModel, batch_size::Int;
     
     nvar = model.meta.nvar
     ncon = model.meta.ncon
+    nnzh = model.meta.nnzh
+    nnzj = model.meta.nnzj
     nθ = length(model.θ)
     
     X = MOD.randn(nvar, batch_size)
@@ -46,6 +48,20 @@ function test_batch_model(model::ExaModel, batch_size::Int;
                 @allowscalar @test grad_vals[:, i] ≈ grad_single atol=atol rtol=rtol
             end
         end
+
+        @testset "Jacobian" begin
+            if ncon > 0
+                jac_vals = BNK.constraints_jacobian!(bm, X, Θ)
+                @test size(jac_vals) == (nnzj, batch_size)
+                @test all(isfinite, jac_vals)
+                for i in 1:batch_size
+                    @allowscalar nθ > 0 && (model.θ .= Θ[:, i])
+                    jac_single = similar(jac_vals, nnzj)
+                    @allowscalar ExaModels.jac_coord!(model, X[:, i], jac_single)
+                    @allowscalar @test jac_vals[:, i] ≈ jac_single atol=atol rtol=rtol
+                end
+            end
+        end
         
         @testset "Jacobian-Vector Product" begin
             if ncon > 0
@@ -76,7 +92,20 @@ function test_batch_model(model::ExaModel, batch_size::Int;
                 end
             end
         end
-        
+
+        @testset "Hessian" begin
+            if ncon > 0
+                hess_vals = BNK.objective_hessian!(bm, X, Θ)
+                @test size(hess_vals) == (nnzh, batch_size)
+                @test all(isfinite, hess_vals)
+                for i in 1:batch_size
+                    @allowscalar nθ > 0 && (model.θ .= Θ[:, i])
+                    hess_single = similar(hess_vals, nnzh)
+                    @allowscalar ExaModels.hess_coord!(model, X[:, i], hess_single)
+                    @allowscalar @test hess_vals[:, i] ≈ hess_single atol=atol rtol=rtol
+                end
+            end
+        end
         @testset "Hessian-Vector Product" begin
             V = MOD.randn(nvar, batch_size)
             if ncon > 0
