@@ -52,8 +52,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
         
         @testset "Constraint Violations" begin
             if ncon > 0
-                V_cons = BNK.constraints!(bm, X, Θ)
-                Vc = BNK.constraint_violations!(bm, V_cons)
+                Vc = BNK.constraint_violations!(bm, X, Θ)
                 
                 @test size(Vc) == (ncon, batch_size)
                 @test all(>=(0), Vc)
@@ -130,8 +129,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
             end
             
             if ncon > 0
-                V_wrong = MOD.randn(ncon + 1, batch_size)
-                @test_throws DimensionMismatch BNK.constraint_violations!(bm, V_wrong)
+                @test_throws DimensionMismatch BNK.constraint_violations!(bm, X_wrong)
             end
         end
         
@@ -141,8 +139,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
             @test_throws AssertionError BNK.bound_violations!(bm, X_large)
             
             if ncon > 0
-                V_large = MOD.randn(ncon, batch_size + 1)
-                @test_throws AssertionError BNK.constraint_violations!(bm, V_large)
+                @test_throws AssertionError BNK.constraint_violations!(bm, X_large)
             end
         end
     end
@@ -178,8 +175,7 @@ function test_violations_differentiability_gpu(model::ExaModel, batch_size::Int;
                 function f_cons_viols(params)
                     X = params[1:nvar, :]
                     Θ = params[nvar+1:end, :]
-                    V_cons = BNK.constraints!(bm, X, Θ)
-                    Vc = BNK.constraint_violations!(bm, V_cons)
+                    Vc = BNK.constraint_violations!(bm, X, Θ)
                     return sum(Vc)
                 end
                 
@@ -267,7 +263,7 @@ function test_violations_config_errors(MOD=OpenCL)
         
         if ncon > 0
             V = MOD.randn(ncon, batch_size)
-            @test_throws ArgumentError BNK.constraint_violations!(bm_no_viols, V)
+            @test_throws ArgumentError BNK._constraint_violations!(bm_no_viols, V)
         end
     end
 end
