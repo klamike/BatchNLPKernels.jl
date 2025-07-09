@@ -13,7 +13,9 @@
 - `constraints_jprod!(::BatchModel, X, Θ, V)`
 - `constraints_jtprod!(::BatchModel, X, Θ, V)`
 - `lagrangian_hprod!(::BatchModel, X, Θ, Y, V; obj_weight=1.0)`
-
+- `all_violations!(::BatchModel, X, Θ)`
+- `constraint_violations!(::BatchModel, X, Θ)`
+- `bound_violations!(::BatchModel, X)`
 
 To use these functions, first wrap your `ExaModel` in a `BatchModel`:
 
