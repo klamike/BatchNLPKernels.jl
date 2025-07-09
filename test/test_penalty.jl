@@ -48,15 +48,14 @@ function test_penalty_training(; filename="pglib_opf_case14_ieee.m", dev_gpu = g
     ncon = model.meta.ncon
     nθ = length(model.θ)
 
-    Θ_train = if typeof(backend) == CUDABackend 
-        CUDA.randn(nθ, dataset_size)
-    else
-        randn(nθ, dataset_size)
-    end
+    Θ_train = randn(nθ, dataset_size) |> dev_gpu
 
     lux_model = feed_forward_builder(nθ, nvar, [320, 320])
 
     ps_model, st_model = Lux.setup(rng, lux_model)
+    ps_model = ps_model |> dev_gpu
+    st_model = st_model |> dev_gpu
+
     X̂ , _ = lux_model(Θ_train, ps_model, st_model)
 
     y = BNK.objective!(bm_all, X̂, Θ_train)
