@@ -1,25 +1,25 @@
 """
-    jac_coord_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+    constraints_jacobian!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
 
 Evaluate Jacobian coordinates for a batch of points.
 """
-function jac_coord_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+function constraints_jacobian!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
     J_view = _maybe_view(bm, :jprod_work, X)
-    jac_coord_batch!(bm, X, Θ, J_view)
+    constraints_jacobian!(bm, X, Θ, J_view)
     return J_view
 end
 
 """
-    jac_coord_batch!(bm::BatchModel, X::AbstractMatrix)
+    constraints_jacobian!(bm::BatchModel, X::AbstractMatrix)
 
 Evaluate Jacobian coordinates for a batch of points.
 """
-function jac_coord_batch!(bm::BatchModel, X::AbstractMatrix)
+function constraints_jacobian!(bm::BatchModel, X::AbstractMatrix)
     Θ = _repeat_params(bm, X)
-    jac_coord_batch!(bm, X, Θ)
+    constraints_jacobian!(bm, X, Θ)
 end
 
-function jac_coord_batch!(
+function constraints_jacobian!(
     bm::BatchModel,
     X::AbstractMatrix,
     Θ::AbstractMatrix,
@@ -34,16 +34,16 @@ function jac_coord_batch!(
     backend = _get_backend(bm.model)
     
     fill!(J, zero(eltype(J)))
-    _jac_coord_batch!(backend, J, bm.model.cons, X, Θ)
+    _constraints_jacobian!(backend, J, bm.model.cons, X, Θ)
     return J
 end
 
-function _jac_coord_batch!(backend, J, cons, X, Θ)
+function _constraints_jacobian!(backend, J, cons, X, Θ)
     sjacobian_batch!(backend, J, nothing, cons, X, Θ, one(eltype(J)))
-    _jac_coord_batch!(backend, J, cons.inner, X, Θ)
+    _constraints_jacobian!(backend, J, cons.inner, X, Θ)
     synchronize(backend)
 end
-function _jac_coord_batch!(backend, J, cons::ExaModels.ConstraintNull, X, Θ) end
+function _constraints_jacobian!(backend, J, cons::ExaModels.ConstraintNull, X, Θ) end
 
 function sjacobian_batch!(
     backend::B,

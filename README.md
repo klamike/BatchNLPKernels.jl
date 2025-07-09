@@ -5,14 +5,14 @@
 
 `BatchNLPKernels.jl` provides [`KernelAbstractions.jl`](https://github.com/JuliaGPU/KernelAbstractions.jl) kernels for evaluating problem data from a (parametric) [`ExaModel`](https://github.com/exanauts/ExaModels.jl) for batches of solutions (and parameters). Currently the following functions (as well as their non-parametric variants) are exported:
 
-- `obj_batch!(::BatchModel, X, Θ)`
-- `grad_batch!(::BatchModel, X, Θ)`
-- `cons_nln_batch!(::BatchModel, X, Θ)`
-- `jac_coord_batch!(::BatchModel, X, Θ)`
-- `hess_coord_batch!(::BatchModel, X, Θ, Y; obj_weight=1.0)`
-- `jprod_nln_batch!(::BatchModel, X, Θ, V)`
-- `jtprod_nln_batch!(::BatchModel, X, Θ, V)`
-- `hprod_batch!(::BatchModel, X, Θ, Y, V; obj_weight=1.0)`
+- `objective!(::BatchModel, X, Θ)`
+- `objective_gradient!(::BatchModel, X, Θ)`
+- `constraints!(::BatchModel, X, Θ)`
+- `constraints_jacobian!(::BatchModel, X, Θ)`
+- `lagrangian_hessian!(::BatchModel, X, Θ, Y; obj_weight=1.0)`
+- `constraints_jprod!(::BatchModel, X, Θ, V)`
+- `constraints_jtprod!(::BatchModel, X, Θ, V)`
+- `lagrangian_hprod!(::BatchModel, X, Θ, Y, V; obj_weight=1.0)`
 
 
 To use these functions, first wrap your `ExaModel` in a `BatchModel`:
@@ -30,7 +30,7 @@ This pre-allocates work and output buffers. By default, only the buffers to supp
 Then, you can call the batch functions as follows:
 
 ```julia
-objs = obj_batch!(bm, X, Θ)
+objs = objective!(bm, X, Θ)
 ```
 
 where `X` and `Θ` are (device) matrices with dimensions `(nvar, batch_size)` and `(nθ, batch_size)` respectively.

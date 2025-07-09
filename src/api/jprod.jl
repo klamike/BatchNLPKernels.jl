@@ -1,31 +1,31 @@
 """
-    jprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
+    constraints_jprod!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
 
 Evaluate Jacobian-vector products for a batch of points.
 """
-function jprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
+function constraints_jprod!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
     Jv = _maybe_view(bm, :jprod_out, X)
-    jprod_nln_batch!(bm, X, Θ, V, Jv)
+    constraints_jprod!(bm, X, Θ, V, Jv)
     return Jv
 end
 
 """
-    jprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
+    constraints_jprod!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
 
 Evaluate Jacobian-vector products for a batch of points.
 """
-function jprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
+function constraints_jprod!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
     Θ = _repeat_params(bm, X)
-    jprod_nln_batch!(bm, X, Θ, V)
+    constraints_jprod!(bm, X, Θ, V)
 end
 
 
 """
-    jprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix, Jv::AbstractMatrix)
+    constraints_jprod!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix, Jv::AbstractMatrix)
 
 Evaluate Jacobian-vector products for a batch of points.
 """
-function jprod_nln_batch!(
+function constraints_jprod!(
     bm::BatchModel,
     X::AbstractMatrix,
     Θ::AbstractMatrix,
@@ -42,7 +42,7 @@ function jprod_nln_batch!(
 
     J_batch = _maybe_view(bm, :jprod_work, X)
 
-    jac_coord_batch!(bm, X, Θ, J_batch)
+    constraints_jacobian!(bm, X, Θ, J_batch)
     
     fill!(Jv, zero(eltype(Jv)))
     kerspmv_batch(bm.model.ext.backend)(
@@ -60,32 +60,32 @@ end
 
 
 """
-    jtprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
+    constraints_jtprod!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
 
 Evaluate Jacobian-transpose-vector products for a batch of points.
 """
-function jtprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
+function constraints_jtprod!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix)
     Jtv = _maybe_view(bm, :jtprod_out, X)
-    jtprod_nln_batch!(bm, X, Θ, V, Jtv)
+    constraints_jtprod!(bm, X, Θ, V, Jtv)
     return Jtv
 end
 
 """
-    jtprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
+    constraints_jtprod!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
 
 Evaluate Jacobian-transpose-vector products for a batch of points.
 """
-function jtprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
+function constraints_jtprod!(bm::BatchModel, X::AbstractMatrix, V::AbstractMatrix)
     Θ = _repeat_params(bm, X)
-    jtprod_nln_batch!(bm, X, Θ, V)
+    constraints_jtprod!(bm, X, Θ, V)
 end
 
 """
-    jtprod_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix, Jtv::AbstractMatrix)
+    constraints_jtprod!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, V::AbstractMatrix, Jtv::AbstractMatrix)
 
 Evaluate Jacobian-transpose-vector products for a batch of points.
 """
-function jtprod_nln_batch!(
+function constraints_jtprod!(
     bm::BatchModel,
     X::AbstractMatrix,
     Θ::AbstractMatrix,
@@ -104,7 +104,7 @@ function jtprod_nln_batch!(
     
     J_batch = _maybe_view(bm, :jprod_work, X)
 
-    jac_coord_batch!(bm, X, Θ, J_batch)
+    constraints_jacobian!(bm, X, Θ, J_batch)
     
     fill!(Jtv, zero(eltype(Jtv)))
     kerspmv2_batch(backend)(

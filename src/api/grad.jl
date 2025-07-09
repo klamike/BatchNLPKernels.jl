@@ -1,30 +1,30 @@
 """
-    grad_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+    objective_gradient!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
 
 Evaluate objective gradient for a batch of points.
 """
-function grad_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+function objective_gradient!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
     G = _maybe_view(bm, :grad_out, X)
-    grad_batch!(bm, X, Θ, G)
+    objective_gradient!(bm, X, Θ, G)
     return G
 end
 
 """
-    grad_batch!(bm::BatchModel, X::AbstractMatrix)
+    objective_gradient!(bm::BatchModel, X::AbstractMatrix)
 
 Evaluate objective gradient for a batch of points.
 """
-function grad_batch!(bm::BatchModel, X::AbstractMatrix)
+function objective_gradient!(bm::BatchModel, X::AbstractMatrix)
     Θ = _repeat_params(bm, X)
-    grad_batch!(bm, X, Θ)
+    objective_gradient!(bm, X, Θ)
 end
 
-function _grad_batch!(backend, grad_work, objs, X, Θ)
+function _objective_gradient!(backend, grad_work, objs, X, Θ)
     sgradient_batch!(backend, grad_work, objs, X, Θ, one(eltype(grad_work)))
-    _grad_batch!(backend, grad_work, objs.inner, X, Θ)
+    _objective_gradient!(backend, grad_work, objs.inner, X, Θ)
     synchronize(backend)
 end
-function _grad_batch!(backend, grad_work, objs::ExaModels.ObjectiveNull, X, Θ) end
+function _objective_gradient!(backend, grad_work, objs::ExaModels.ObjectiveNull, X, Θ) end
 
 function sgradient_batch!(
     backend::B,
@@ -41,11 +41,11 @@ function sgradient_batch!(
 end
 
 """
-    grad_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, G::AbstractMatrix)
+    objective_gradient!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, G::AbstractMatrix)
 
 Evaluate gradients for a batch of points with different parameters.
 """
-function grad_batch!(
+function objective_gradient!(
     bm::BatchModel,
     X::AbstractMatrix,
     Θ::AbstractMatrix,
@@ -63,7 +63,7 @@ function grad_batch!(
     if !isempty(grad_work)
         fill!(grad_work, zero(eltype(grad_work)))
 
-        _grad_batch!(backend, grad_work, bm.model.objs, X, Θ)
+        _objective_gradient!(backend, grad_work, bm.model.objs, X, Θ)
         
         fill!(G, zero(eltype(G)))
         compress_to_dense_batch(backend)(

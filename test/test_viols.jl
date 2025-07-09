@@ -52,7 +52,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
         
         @testset "Constraint Violations" begin
             if ncon > 0
-                V_cons = BOI.cons_nln_batch!(bm, X, Θ)
+                V_cons = BOI.constraints!(bm, X, Θ)
                 Vc = BOI.constraint_violations!(bm, V_cons)
                 
                 @test size(Vc) == (ncon, batch_size)
@@ -178,7 +178,7 @@ function test_violations_differentiability_gpu(model::ExaModel, batch_size::Int;
                 function f_cons_viols(params)
                     X = params[1:nvar, :]
                     Θ = params[nvar+1:end, :]
-                    V_cons = BOI.cons_nln_batch!(bm, X, Θ)
+                    V_cons = BOI.constraints!(bm, X, Θ)
                     Vc = BOI.constraint_violations!(bm, V_cons)
                     return sum(Vc)
                 end

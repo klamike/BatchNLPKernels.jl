@@ -8,14 +8,14 @@ function test_diff_gpu(model::ExaModel, batch_size::Int; MOD=OpenCL)
     X_gpu = MOD.randn(nvar, batch_size)
     Θ_gpu = MOD.randn(nθ, batch_size)
 
-    @testset "obj_batch!" begin
-        y = BOI.obj_batch!(bm, X_gpu, Θ_gpu)
+    @testset "objective!" begin
+        y = BOI.objective!(bm, X_gpu, Θ_gpu)
         @test size(y) == (batch_size,)
 
         function f_gpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.obj_batch!(bm, X, Θ))
+            return sum(BOI.objective!(bm, X, Θ))
         end
         
         params = vcat(X_gpu, Θ_gpu)
@@ -26,14 +26,14 @@ function test_diff_gpu(model::ExaModel, batch_size::Int; MOD=OpenCL)
     
     ncon == 0 && return
 
-    @testset "cons_nln_batch!" begin
-        y = BOI.cons_nln_batch!(bm, X_gpu, Θ_gpu)
+    @testset "constraints!" begin
+        y = BOI.constraints!(bm, X_gpu, Θ_gpu)
         @test size(y) == (ncon, batch_size)
 
         function f_gpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.cons_nln_batch!(bm, X, Θ))
+            return sum(BOI.constraints!(bm, X, Θ))
         end
         
         params = vcat(X_gpu, Θ_gpu)
@@ -53,14 +53,14 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
     X_cpu = randn(nvar, batch_size)
     Θ_cpu = randn(nθ, batch_size)
     
-    @testset "obj_batch! CPU" begin
-        y = BOI.obj_batch!(bm, X_cpu, Θ_cpu)
+    @testset "objective! CPU" begin
+        y = BOI.objective!(bm, X_cpu, Θ_cpu)
         @test size(y) == (batch_size,)
 
         function f_cpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.obj_batch!(bm, X, Θ))
+            return sum(BOI.objective!(bm, X, Θ))
         end
         
         params = vcat(X_cpu, Θ_cpu)
@@ -68,7 +68,7 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
         @test grad isa AbstractMatrix
         @test size(grad) == size(params)
 
-        @testset "FiniteDifferences obj_batch!" begin
+        @testset "FiniteDifferences objective!" begin
             gradfd = DI.gradient(f_cpu, AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(3,1)), params)
             @test gradfd[1:nvar,:] ≈ grad[1:nvar,:] atol=1e-4 rtol=1e-4
         end
@@ -76,14 +76,14 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
 
     ncon == 0 && return
     
-    @testset "cons_nln_batch! CPU" begin
-        y = BOI.cons_nln_batch!(bm, X_cpu, Θ_cpu)
+    @testset "constraints! CPU" begin
+        y = BOI.constraints!(bm, X_cpu, Θ_cpu)
         @test size(y) == (ncon, batch_size)
 
         function f_cpu(params)
             X = params[1:nvar, :]
             Θ = params[nvar+1:end, :]
-            return sum(BOI.cons_nln_batch!(bm, X, Θ))
+            return sum(BOI.constraints!(bm, X, Θ))
         end
         
         params = vcat(X_cpu, Θ_cpu)
@@ -91,7 +91,7 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
         @test grad isa AbstractMatrix
         @test size(grad) == size(params)
 
-        @testset "FiniteDifferences cons_nln_batch!" begin
+        @testset "FiniteDifferences constraints!" begin
             gradfd = DI.gradient(f_cpu, AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(3,1)), params)
             @test gradfd[1:nvar,:] ≈ grad[1:nvar,:] atol=1e-4 rtol=1e-4
         end

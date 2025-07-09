@@ -12,7 +12,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
     
     @testset "Model Info: $(nvar) vars, $(ncon) cons, $(nθ) params" begin
         @testset "Objective" begin
-            obj_vals = BOI.obj_batch!(bm, X, Θ)
+            obj_vals = BOI.objective!(bm, X, Θ)
             @test length(obj_vals) == batch_size
             @test all(isfinite, obj_vals)
             for i in 1:batch_size
@@ -23,7 +23,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
         
         @testset "Constraint" begin
             if ncon > 0
-                cons_vals = BOI.cons_nln_batch!(bm, X, Θ)
+                cons_vals = BOI.constraints!(bm, X, Θ)
                 @test size(cons_vals) == (ncon, batch_size)
                 @test all(isfinite, cons_vals)
                 for i in 1:batch_size
@@ -36,7 +36,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
         end
         
         @testset "Gradient" begin
-            grad_vals = BOI.grad_batch!(bm, X, Θ)
+            grad_vals = BOI.objective_gradient!(bm, X, Θ)
             @test size(grad_vals) == (nvar, batch_size)
             @test all(isfinite, grad_vals)
             for i in 1:batch_size
@@ -50,7 +50,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
         @testset "Jacobian-Vector Product" begin
             if ncon > 0
                 V = MOD.randn(nvar, batch_size)
-                jprod_vals = BOI.jprod_nln_batch!(bm, X, Θ, V)
+                jprod_vals = BOI.constraints_jprod!(bm, X, Θ, V)
                 @test size(jprod_vals) == (ncon, batch_size)
                 @test all(isfinite, jprod_vals)
                 for i in 1:batch_size
@@ -65,7 +65,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
         @testset "Jacobian-Transpose-Vector Product" begin
             if ncon > 0
                 V = MOD.randn(ncon, batch_size)
-                jtprod_vals = BOI.jtprod_nln_batch!(bm, X, Θ, V)
+                jtprod_vals = BOI.constraints_jtprod!(bm, X, Θ, V)
                 @test size(jtprod_vals) == (nvar, batch_size)
                 @test all(isfinite, jtprod_vals)
                 for i in 1:batch_size
@@ -81,7 +81,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
             V = MOD.randn(nvar, batch_size)
             if ncon > 0
                 Y = MOD.randn(ncon, batch_size)
-                hprod_vals = BOI.hprod_batch!(bm, X, Θ, Y, V)
+                hprod_vals = BOI.lagrangian_hprod!(bm, X, Θ, Y, V)
                 @test size(hprod_vals) == (nvar, batch_size)
                 @test all(isfinite, hprod_vals)
                 for i in 1:batch_size
@@ -92,7 +92,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
                 end
             else
                 Y = MOD.zeros(ncon, batch_size)
-                hprod_vals = BOI.hprod_batch!(bm, X, Θ, Y, V)
+                hprod_vals = BOI.lagrangian_hprod!(bm, X, Θ, Y, V)
                 @test size(hprod_vals) == (nvar, batch_size)
                 @test all(isfinite, hprod_vals)
                 for i in 1:batch_size
@@ -106,60 +106,60 @@ function test_batch_model(model::ExaModel, batch_size::Int;
         
         @testset "Batch Size Validation" begin
             X_large = MOD.randn(nvar, batch_size + 1)
-            @test_throws AssertionError BOI.obj_batch!(bm, X_large)
+            @test_throws AssertionError BOI.objective!(bm, X_large)
             
             if ncon > 0
-                @test_throws AssertionError BOI.cons_nln_batch!(bm, X_large)
+                @test_throws AssertionError BOI.constraints!(bm, X_large)
             end
             
-            @test_throws AssertionError BOI.grad_batch!(bm, X_large)
+            @test_throws AssertionError BOI.objective_gradient!(bm, X_large)
             
             if ncon > 0
                 V_jprod = MOD.randn(nvar, batch_size + 1)
-                @test_throws AssertionError BOI.jprod_nln_batch!(bm, X_large, V_jprod)
+                @test_throws AssertionError BOI.constraints_jprod!(bm, X_large, V_jprod)
                 
                 V_jtprod = MOD.randn(ncon, batch_size + 1)
-                @test_throws AssertionError BOI.jtprod_nln_batch!(bm, X_large, V_jtprod)
+                @test_throws AssertionError BOI.constraints_jtprod!(bm, X_large, V_jtprod)
             end
             
             V_hprod = MOD.randn(nvar, batch_size + 1)
             if ncon > 0
                 Y_large = MOD.randn(ncon, batch_size + 1)
-                @test_throws AssertionError BOI.hprod_batch!(bm, X_large, Y_large, V_hprod)
+                @test_throws AssertionError BOI.lagrangian_hprod!(bm, X_large, Y_large, V_hprod)
             else
                 Y_large = MOD.zeros(ncon, batch_size + 1)
-                @test_throws AssertionError BOI.hprod_batch!(bm, X_large, Y_large, V_hprod)
+                @test_throws AssertionError BOI.lagrangian_hprod!(bm, X_large, Y_large, V_hprod)
             end
         end
         
         @testset "Dimension Validation" begin
             X_wrong = MOD.randn(nvar + 1, batch_size)
-            @test_throws DimensionMismatch BOI.obj_batch!(bm, X_wrong)
+            @test_throws DimensionMismatch BOI.objective!(bm, X_wrong)
 
             if nθ > 0
                 Θ_wrong = MOD.randn(nθ + 1, batch_size)
-                @test_throws DimensionMismatch BOI.obj_batch!(bm, X, Θ_wrong)
+                @test_throws DimensionMismatch BOI.objective!(bm, X, Θ_wrong)
             end
             
             if ncon > 0
                 V_jprod_wrong = MOD.randn(nvar + 1, batch_size)
-                @test_throws DimensionMismatch BOI.jprod_nln_batch!(bm, X, V_jprod_wrong)
+                @test_throws DimensionMismatch BOI.constraints_jprod!(bm, X, V_jprod_wrong)
                 
                 V_jtprod_wrong = MOD.randn(ncon + 1, batch_size)
-                @test_throws DimensionMismatch BOI.jtprod_nln_batch!(bm, X, V_jtprod_wrong)
+                @test_throws DimensionMismatch BOI.constraints_jtprod!(bm, X, V_jtprod_wrong)
                 
                 Y_wrong = MOD.randn(ncon + 1, batch_size)
                 V_hprod = MOD.randn(nvar, batch_size)
-                @test_throws DimensionMismatch BOI.hprod_batch!(bm, X, Y_wrong, V_hprod)
+                @test_throws DimensionMismatch BOI.lagrangian_hprod!(bm, X, Y_wrong, V_hprod)
             end
 
             V_hprod_wrong = MOD.randn(nvar + 1, batch_size)
             if ncon > 0
                 Y = MOD.randn(ncon, batch_size)
-                @test_throws DimensionMismatch BOI.hprod_batch!(bm, X, Y, V_hprod_wrong)
+                @test_throws DimensionMismatch BOI.lagrangian_hprod!(bm, X, Y, V_hprod_wrong)
             else
                 Y = MOD.zeros(ncon, batch_size)
-                @test_throws DimensionMismatch BOI.hprod_batch!(bm, X, Y, V_hprod_wrong)
+                @test_throws DimensionMismatch BOI.lagrangian_hprod!(bm, X, Y, V_hprod_wrong)
             end
         end
     end
