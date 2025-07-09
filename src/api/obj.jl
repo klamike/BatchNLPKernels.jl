@@ -1,25 +1,25 @@
 """
-    obj_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+    objective!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
 
 Evaluate objective function for a batch of points.
 """
-function obj_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+function objective!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
     obj_work = _maybe_view(bm, :obj_work, X)
-    return obj_batch!(bm, obj_work, X, Θ)
+    return objective!(bm, obj_work, X, Θ)
 end
 
 
 """
-    obj_batch!(bm::BatchModel, X::AbstractMatrix)
+    objective!(bm::BatchModel, X::AbstractMatrix)
 
 Evaluate objective function for a batch of points.
 """
-function obj_batch!(bm::BatchModel, X::AbstractMatrix)
+function objective!(bm::BatchModel, X::AbstractMatrix)
     Θ = _repeat_params(bm, X)
-    return obj_batch!(bm, X, Θ)
+    return objective!(bm, X, Θ)
 end
 
-function obj_batch!(
+function objective!(
     bm::BatchModel,
     obj_work,
     X::AbstractMatrix,

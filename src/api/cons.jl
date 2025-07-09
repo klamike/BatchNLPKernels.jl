@@ -1,26 +1,26 @@
 """
-    cons_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+    constraints!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
 
 Evaluate constraints for a batch of solutions and parameters.
 """
-function cons_nln_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+function constraints!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
     C = _maybe_view(bm, :cons_out, X)
-    cons_nln_batch!(bm, X, Θ, C)
+    constraints!(bm, X, Θ, C)
     return C
 end
 
 """
-    cons_nln_batch!(bm::BatchModel, X::AbstractMatrix)
+    constraints!(bm::BatchModel, X::AbstractMatrix)
 
 Evaluate constraints for a batch of solutions.
 """
-function cons_nln_batch!(bm::BatchModel, X::AbstractMatrix)
+function constraints!(bm::BatchModel, X::AbstractMatrix)
     Θ = _repeat_params(bm, X)
-    cons_nln_batch!(bm, X, Θ)
+    constraints!(bm, X, Θ)
 end
 
 
-function cons_nln_batch!(
+function constraints!(
     bm::BatchModel,
     X::AbstractMatrix,
     Θ::AbstractMatrix,
@@ -34,7 +34,7 @@ function cons_nln_batch!(
     _assert_batch_size(batch_size, bm.batch_size)
     backend = _get_backend(bm.model)
 
-    _cons_nln_batch!(backend, C, bm.model.cons, X, Θ)
+    _constraints!(backend, C, bm.model.cons, X, Θ)
 
     conbuffers_batch = _maybe_view(bm, :cons_work, X)
 
@@ -53,17 +53,17 @@ function cons_nln_batch!(
     return C
 end
 
-function _cons_nln_batch!(backend, C, con::ExaModels.Constraint, X, Θ)
+function _constraints!(backend, C, con::ExaModels.Constraint, X, Θ)
     if !isempty(con.itr)
         batch_size = size(X, 2)
         kerf_batch(backend)(C, con.f, con.itr, X, Θ; ndrange = (length(con.itr), batch_size))
     end
-    _cons_nln_batch!(backend, C, con.inner, X, Θ)
+    _constraints!(backend, C, con.inner, X, Θ)
     synchronize(backend)
 end
-function _cons_nln_batch!(backend, C, con::ExaModels.ConstraintNull, X, Θ) end
-function _cons_nln_batch!(backend, C, con::ExaModels.ConstraintAug, X, Θ)
-    _cons_nln_batch!(backend, C, con.inner, X, Θ)
+function _constraints!(backend, C, con::ExaModels.ConstraintNull, X, Θ) end
+function _constraints!(backend, C, con::ExaModels.ConstraintAug, X, Θ)
+    _constraints!(backend, C, con.inner, X, Θ)
 end
 
 function _conaugs_batch!(backend, conbuffers, con::ExaModels.ConstraintAug, X, Θ)

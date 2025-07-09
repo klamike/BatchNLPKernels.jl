@@ -1,6 +1,6 @@
 function test_violations_correctness(model::ExaModel, batch_size::Int; 
                                    atol::Float64=1e-10, rtol::Float64=1e-10, MOD=OpenCL)
-    bm = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:violations))
+    bm = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:violations))
     
     nvar = model.meta.nvar
     ncon = model.meta.ncon
@@ -22,7 +22,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
         
         @testset "All Violations" begin
             if nθ > 0
-                Vc, Vb = BOI.all_violations!(bm, X, Θ)
+                Vc, Vb = BNK.all_violations!(bm, X, Θ)
                 @test size(Vc) == (ncon, batch_size)
                 @test size(Vb) == (nvar, batch_size)
                 @test all(>=(0), Vc)
@@ -41,7 +41,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
                 end
             end
 
-            Vc, Vb = BOI.all_violations!(bm, X)
+            Vc, Vb = BNK.all_violations!(bm, X)
             @test size(Vc) == (ncon, batch_size)
             @test size(Vb) == (nvar, batch_size)
             @test all(>=(0), Vc)
@@ -52,8 +52,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
         
         @testset "Constraint Violations" begin
             if ncon > 0
-                V_cons = BOI.cons_nln_batch!(bm, X, Θ)
-                Vc = BOI.constraint_violations!(bm, V_cons)
+                Vc = BNK.constraint_violations!(bm, X, Θ)
                 
                 @test size(Vc) == (ncon, batch_size)
                 @test all(>=(0), Vc)
@@ -82,7 +81,7 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
         end
         
         @testset "Bound Violations" begin
-            Vb = BOI.bound_violations!(bm, X)
+            Vb = BNK.bound_violations!(bm, X)
             @test size(Vb) == (nvar, batch_size)
             @test all(>=(0), Vb)
             @test all(isfinite, Vb)
@@ -114,42 +113,40 @@ function test_violations_correctness(model::ExaModel, batch_size::Int;
                     X_feasible[uunconstr, :] .= model.meta.lvar[uunconstr] .+ 0.1
                     @assert all(isfinite, X_feasible)
                 end
-                Vb_feasible = BOI.bound_violations!(bm, X_feasible)
+                Vb_feasible = BNK.bound_violations!(bm, X_feasible)
                 @test all(==(0), Vb_feasible)
             end
         end
         
         @testset "Dimension Validation" begin
             X_wrong = MOD.randn(nvar + 1, batch_size)
-            @test_throws DimensionMismatch BOI.all_violations!(bm, X_wrong)
-            @test_throws DimensionMismatch BOI.bound_violations!(bm, X_wrong)
+            @test_throws DimensionMismatch BNK.all_violations!(bm, X_wrong)
+            @test_throws DimensionMismatch BNK.bound_violations!(bm, X_wrong)
             
             if nθ > 0
                 Θ_wrong = MOD.randn(nθ + 1, batch_size)
-                @test_throws DimensionMismatch BOI.all_violations!(bm, X, Θ_wrong)
+                @test_throws DimensionMismatch BNK.all_violations!(bm, X, Θ_wrong)
             end
             
             if ncon > 0
-                V_wrong = MOD.randn(ncon + 1, batch_size)
-                @test_throws DimensionMismatch BOI.constraint_violations!(bm, V_wrong)
+                @test_throws DimensionMismatch BNK.constraint_violations!(bm, X_wrong)
             end
         end
         
         @testset "Batch Size Validation" begin
             X_large = MOD.randn(nvar, batch_size + 1)
-            @test_throws AssertionError BOI.all_violations!(bm, X_large)
-            @test_throws AssertionError BOI.bound_violations!(bm, X_large)
+            @test_throws AssertionError BNK.all_violations!(bm, X_large)
+            @test_throws AssertionError BNK.bound_violations!(bm, X_large)
             
             if ncon > 0
-                V_large = MOD.randn(ncon, batch_size + 1)
-                @test_throws AssertionError BOI.constraint_violations!(bm, V_large)
+                @test_throws AssertionError BNK.constraint_violations!(bm, X_large)
             end
         end
     end
 end
 
 function test_violations_differentiability_gpu(model::ExaModel, batch_size::Int; MOD=OpenCL)
-    bm = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:viol_grad))
+    bm = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:viol_grad))
     
     nvar = model.meta.nvar
     ncon = model.meta.ncon
@@ -163,7 +160,7 @@ function test_violations_differentiability_gpu(model::ExaModel, batch_size::Int;
             function f_all_viols(params)
                 X = params[1:nvar, :]
                 Θ = params[nvar+1:end, :]
-                Vc, Vb = BOI.all_violations!(bm, X, Θ)
+                Vc, Vb = BNK.all_violations!(bm, X, Θ)
                 return sum(Vc) + sum(Vb)
             end
             
@@ -178,8 +175,7 @@ function test_violations_differentiability_gpu(model::ExaModel, batch_size::Int;
                 function f_cons_viols(params)
                     X = params[1:nvar, :]
                     Θ = params[nvar+1:end, :]
-                    V_cons = BOI.cons_nln_batch!(bm, X, Θ)
-                    Vc = BOI.constraint_violations!(bm, V_cons)
+                    Vc = BNK.constraint_violations!(bm, X, Θ)
                     return sum(Vc)
                 end
                 
@@ -192,7 +188,7 @@ function test_violations_differentiability_gpu(model::ExaModel, batch_size::Int;
         
         @testset "Bound Violations Sum" begin
             function f_bound_viols(X)
-                Vb = BOI.bound_violations!(bm, X)
+                Vb = BNK.bound_violations!(bm, X)
                 return sum(Vb)
             end
             
@@ -204,7 +200,7 @@ function test_violations_differentiability_gpu(model::ExaModel, batch_size::Int;
 end
 
 function test_violations_differentiability_cpu(model::ExaModel, batch_size::Int)
-    bm = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:viol_grad))
+    bm = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:viol_grad))
     
     nvar = model.meta.nvar
     nθ = length(model.θ)
@@ -217,7 +213,7 @@ function test_violations_differentiability_cpu(model::ExaModel, batch_size::Int)
             function f_all_viols(params)
                 X = params[1:nvar, :]
                 Θ = params[nvar+1:end, :]
-                Vc, Vb = BOI.all_violations!(bm, X, Θ)
+                Vc, Vb = BNK.all_violations!(bm, X, Θ)
                 return sum(Vc) + sum(Vb)
             end
             
@@ -234,7 +230,7 @@ function test_violations_differentiability_cpu(model::ExaModel, batch_size::Int)
         
         @testset "Bound Violations Sum" begin
             function f_bound_viols(X)
-                Vb = BOI.bound_violations!(bm, X)
+                Vb = BNK.bound_violations!(bm, X)
                 return sum(Vb)
             end
             
@@ -261,13 +257,13 @@ function test_violations_config_errors(MOD=OpenCL)
     Θ = MOD.randn(nθ, batch_size)
     
     @testset "Config Errors" begin
-        bm_no_viols = BOI.BatchModel(model, batch_size, config=BOI.BatchModelConfig(:minimal))
-        @test_throws ArgumentError BOI.all_violations!(bm_no_viols, X, Θ)
-        @test_throws ArgumentError BOI.bound_violations!(bm_no_viols, X)
+        bm_no_viols = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:minimal))
+        @test_throws ArgumentError BNK.all_violations!(bm_no_viols, X, Θ)
+        @test_throws ArgumentError BNK.bound_violations!(bm_no_viols, X)
         
         if ncon > 0
             V = MOD.randn(ncon, batch_size)
-            @test_throws ArgumentError BOI.constraint_violations!(bm_no_viols, V)
+            @test_throws ArgumentError BNK._constraint_violations!(bm_no_viols, V)
         end
     end
 end

@@ -4,9 +4,7 @@
 Compute all constraint and variable violations for a batch of solutions.
 """
 function all_violations!(bm::BatchModel, X::AbstractMatrix)
-    V = cons_nln_batch!(bm, X)
-
-    Vc = constraint_violations!(bm, V)
+    Vc = constraint_violations!(bm, X)
     Vb = bound_violations!(bm, X)
 
     return Vc, Vb
@@ -18,20 +16,32 @@ end
 Compute all constraint and variable violations for a batch of solutions and parameters.
 """
 function all_violations!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
-    V = cons_nln_batch!(bm, X, Θ)
-
-    Vc = constraint_violations!(bm, V)
+    Vc = constraint_violations!(bm, X, Θ)
     Vb = bound_violations!(bm, X)
 
     return Vc, Vb
 end
 
 """
-    constraint_violations!(bm::BatchModel, V::AbstractMatrix)
+    constraint_violations!(bm::BatchModel, X::AbstractMatrix)
 
 Compute constraint violations for a batch of constraint primal values.
 """
-function constraint_violations!(bm::BatchModel, V::AbstractMatrix)
+function constraint_violations!(bm::BatchModel, X::AbstractMatrix)
+    V = constraints!(bm, X)
+    return _constraint_violations!(bm, V)
+end
+"""
+    constraint_violations!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+
+Compute constraint violations for a batch of constraint primal values.
+"""
+function constraint_violations!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
+    V = constraints!(bm, X, Θ)
+    return _constraint_violations!(bm, V)
+end
+
+function _constraint_violations!(bm::BatchModel, V::AbstractMatrix)
     viols_cons_out = _maybe_view(bm, :viols_cons_out, V)
     
     _violation!.(eachcol(viols_cons_out), eachcol(V), bm.viols_cons)

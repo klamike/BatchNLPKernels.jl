@@ -1,25 +1,25 @@
 """
-    hess_coord_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
+    lagrangian_hessian!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
 
 Evaluate Hessian coordinates for a batch of points.
 """
-function hess_coord_batch!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
+function lagrangian_hessian!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
     H_view = _maybe_view(bm, :hprod_work, X)
-    hess_coord_batch!(bm, X, Θ, Y, H_view; obj_weight=obj_weight)
+    lagrangian_hessian!(bm, X, Θ, Y, H_view; obj_weight=obj_weight)
     return H_view
 end
 
 """
-    hess_coord_batch!(bm::BatchModel, X::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
+    lagrangian_hessian!(bm::BatchModel, X::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
 
 Evaluate Hessian coordinates for a batch of points.
 """
-function hess_coord_batch!(bm::BatchModel, X::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
+function lagrangian_hessian!(bm::BatchModel, X::AbstractMatrix, Y::AbstractMatrix; obj_weight=1.0)
     Θ = _repeat_params(bm, X)
-    hess_coord_batch!(bm, X, Θ, Y; obj_weight=obj_weight)
+    lagrangian_hessian!(bm, X, Θ, Y; obj_weight=obj_weight)
 end
 
-function hess_coord_batch!(
+function lagrangian_hessian!(
     bm::BatchModel,
     X::AbstractMatrix,
     Θ::AbstractMatrix,
@@ -37,24 +37,24 @@ function hess_coord_batch!(
     backend = _get_backend(bm.model)
     
     fill!(H, zero(eltype(H)))
-    _obj_hess_coord_batch!(backend, H, bm.model.objs, X, Θ, obj_weight)
-    _con_hess_coord_batch!(backend, H, bm.model.cons, X, Θ, Y)
+    _obj_lagrangian_hessian!(backend, H, bm.model.objs, X, Θ, obj_weight)
+    _con_lagrangian_hessian!(backend, H, bm.model.cons, X, Θ, Y)
     return H
 end
 
-function _obj_hess_coord_batch!(backend, H, objs, X, Θ, obj_weight)
+function _obj_lagrangian_hessian!(backend, H, objs, X, Θ, obj_weight)
     shessian_batch!(backend, H, nothing, objs, X, Θ, obj_weight, zero(eltype(H)))
-    _obj_hess_coord_batch!(backend, H, objs.inner, X, Θ, obj_weight)
+    _obj_lagrangian_hessian!(backend, H, objs.inner, X, Θ, obj_weight)
     synchronize(backend)
 end
-function _obj_hess_coord_batch!(backend, H, objs::ExaModels.ObjectiveNull, X, Θ, obj_weight) end
+function _obj_lagrangian_hessian!(backend, H, objs::ExaModels.ObjectiveNull, X, Θ, obj_weight) end
 
-function _con_hess_coord_batch!(backend, H, cons, X, Θ, Y)
+function _con_lagrangian_hessian!(backend, H, cons, X, Θ, Y)
     shessian_batch!(backend, H, nothing, cons, X, Θ, Y, zero(eltype(H)))
-    _con_hess_coord_batch!(backend, H, cons.inner, X, Θ, Y)
+    _con_lagrangian_hessian!(backend, H, cons.inner, X, Θ, Y)
     synchronize(backend)
 end
-function _con_hess_coord_batch!(backend, H, cons::ExaModels.ConstraintNull, X, Θ, Y) end
+function _con_lagrangian_hessian!(backend, H, cons::ExaModels.ConstraintNull, X, Θ, Y) end
 
 function shessian_batch!(
     backend::B,
