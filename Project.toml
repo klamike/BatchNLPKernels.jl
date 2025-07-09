@@ -27,14 +27,16 @@ DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
 GPUArraysCore = "46192b85-c4d5-4398-a991-12ede77f4527"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
+LuxCUDA = "d0bbae9a-e099-4d5b-a835-1c6931763bda"
 OpenCL = "08131aa3-fb12-5dee-8b74-c09406e224a2"
 PGLib = "07a8691f-3d11-4330-951b-3c50f98338be"
 PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 pocl_jll = "627d6b7a-bbe6-5189-83e7-98cc0a5aeadd"
-Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
-LuxCUDA = "d0bbae9a-e099-4d5b-a835-1c6931763bda"
+MLUtils = "f1d291b0-491e-4a28-83b9-f70985020b54"
+Optimisers = "3bd65402-5787-11e9-1adc-39752487f4e2"
 
 [targets]
-test = ["Test", "CUDA", "GPUArraysCore", "LinearAlgebra", "OpenCL", "pocl_jll", "AcceleratedKernels", "DifferentiationInterface", "FiniteDifferences", "Zygote", "PGLib", "PowerModels", "Lux", "LuxCUDA"]
+test = ["Test", "CUDA", "GPUArraysCore", "LinearAlgebra", "OpenCL", "pocl_jll", "AcceleratedKernels", "DifferentiationInterface", "FiniteDifferences", "Zygote", "PGLib", "PowerModels", "Lux", "LuxCUDA", "MLUtils", "Optimisers"]

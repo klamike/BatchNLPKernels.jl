@@ -4,6 +4,7 @@ using Lux.Training
 using MLUtils
 using Optimisers
 using CUDA
+using Random
 
 dev_gpu = gpu_device()
 
@@ -33,39 +34,41 @@ function feed_forward_builder(
     
     return Chain(dense_layers...)
 end
-
-model = create_parametric_ac_power_model("pglib_opf_case14_ieee.m"; backend = CUDABackend())
+# backend = CUDABackend()
+batch_size = 32
+model = create_parametric_ac_power_model("pglib_opf_case14_ieee.m"; backend = CPU())
 bm = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:full))
 
 function PenaltyLoss(model, ps, st, Θ)
-    X̂ , _ = model(Θ, ps, st)
+    X̂ , st_new = model(Θ, ps, st)
 
-    y = BNK.objective!(bm, X̂, Θ)
+    obj = BNK.objective!(bm, X̂, Θ)
     Vc, Vb = BNK.all_violations!(bm, X̂, Θ)
 
-    return sum(y) + 1000 * sum(Vc) + 1000 * sum(Vb)
+    return sum(obj) + 1000 * sum(Vc) + 1000 * sum(Vb), st_new, (;obj=sum(obj), Vc=sum(Vc), Vb=sum(Vb))
 end
 
 MOD = CUDA
-batch_size = 32
 dataset_size = 3200
+rng = Random.default_rng()
 
 nvar = model.meta.nvar
 ncon = model.meta.ncon
 nθ = length(model.θ)
 
 # X̂ = MOD.randn(nvar, dataset_size)
+# Θ_train = randn(nθ, dataset_size)
 Θ_train = MOD.randn(nθ, dataset_size)
 
 lux_model = feed_forward_builder(nθ, nvar, [320, 320])
 
 ps_model, st_model = Lux.setup(rng, lux_model)
-X̂ , _ = model(Xtrain, ps_model, st_model)
+X̂ , _ = lux_model(Θ_train, ps_model, st_model)
 
-y = BNK.objective!(bm, X̂, Θ_train)
-Vc, Vb = BNK.all_violations!(bm, X̂, Θ_train)
+y = BNK.objective!(bm, X̂[:,1:32], Θ_train[:,1:32])
+Vc, Vb = BNK.all_violations!(bm, X̂[:,1:32], Θ_train[:,1:32])
 
-train_state = Training.TrainState(model, ps_model, st_model, Optimisers.Adam(1e-5))
+train_state = Training.TrainState(lux_model, ps_model, st_model, Optimisers.Adam(1e-5))
 
 data = DataLoader((Θ_train); batchsize=batch_size, shuffle=true) .|> dev_gpu
 for (Θ) in data
