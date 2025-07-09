@@ -95,13 +95,14 @@ function test_batch_model(model::ExaModel, batch_size::Int;
 
         @testset "Hessian" begin
             if ncon > 0
-                hess_vals = BNK.lagrangian_hessian!(bm, X, Θ)
+                Y = MOD.randn(ncon, batch_size)
+                hess_vals = BNK.lagrangian_hessian!(bm, X, Θ, Y)
                 @test size(hess_vals) == (nnzh, batch_size)
                 @test all(isfinite, hess_vals)
                 for i in 1:batch_size
                     @allowscalar nθ > 0 && (model.θ .= Θ[:, i])
                     hess_single = similar(hess_vals, nnzh)
-                    @allowscalar ExaModels.hess_coord!(model, X[:, i], hess_single)
+                    @allowscalar ExaModels.hess_coord!(model, X[:, i], Y[:, i], hess_single)
                     @allowscalar @test hess_vals[:, i] ≈ hess_single atol=atol rtol=rtol
                 end
             end
