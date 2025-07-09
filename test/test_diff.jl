@@ -23,6 +23,19 @@ function test_diff_gpu(model::ExaModel, batch_size::Int; MOD=OpenCL)
         @test grad isa AbstractMatrix
         @test size(grad) == size(params)
     end
+
+    @testset "objective! no params" begin
+        y = BNK.objective!(bm, X_gpu)
+        @test size(y) == (batch_size,)
+
+        function f_gpu(X)
+            return sum(BNK.objective!(bm, X))
+        end
+        
+        grad = DI.gradient(f_gpu, AutoZygote(), X_gpu)
+        @test grad isa AbstractMatrix
+        @test size(grad) == size(X_gpu)
+    end
     
     ncon == 0 && return
 
@@ -40,6 +53,19 @@ function test_diff_gpu(model::ExaModel, batch_size::Int; MOD=OpenCL)
         grad = DI.gradient(f_gpu, AutoZygote(), params)
         @test grad isa AbstractMatrix
         @test size(grad) == size(params)
+    end
+
+    @testset "constraints! no params" begin
+        y = BNK.constraints!(bm, X_gpu, Θ_gpu)
+        @test size(y) == (ncon, batch_size)
+
+        function f_gpu(X)
+            return sum(BNK.constraints!(bm, X))
+        end
+
+        grad = DI.gradient(f_gpu, AutoZygote(), X_gpu)
+        @test grad isa AbstractMatrix
+        @test size(grad) == size(X_gpu)
     end
 end
 
@@ -74,6 +100,24 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
         end
     end
 
+    @testset "objective! no params" begin
+        y = BNK.objective!(bm, X_cpu)
+        @test size(y) == (batch_size,)
+
+        function f_cpu(X)
+            return sum(BNK.objective!(bm, X))
+        end
+
+        grad = DI.gradient(f_cpu, AutoZygote(), X_cpu)
+        @test grad isa AbstractMatrix
+        @test size(grad) == size(X_cpu)
+
+        @testset "FiniteDifferences objective! no params" begin
+            gradfd = DI.gradient(f_cpu, AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(3,1)), X_cpu)
+            @test gradfd ≈ grad atol=1e-4 rtol=1e-4
+        end
+    end
+
     ncon == 0 && return
     
     @testset "constraints! CPU" begin
@@ -96,8 +140,25 @@ function test_diff_cpu(model::ExaModel, batch_size::Int)
             @test gradfd[1:nvar,:] ≈ grad[1:nvar,:] atol=1e-4 rtol=1e-4
         end
     end
-end
 
+    @testset "constraints! no params" begin
+        y = BNK.constraints!(bm, X_cpu, Θ_cpu)
+        @test size(y) == (ncon, batch_size)
+
+        function f_cpu(X)
+            return sum(BNK.constraints!(bm, X))
+        end
+
+        grad = DI.gradient(f_cpu, AutoZygote(), X_cpu)
+        @test grad isa AbstractMatrix
+        @test size(grad) == size(X_cpu)
+
+        @testset "FiniteDifferences constraints! no params" begin
+            gradfd = DI.gradient(f_cpu, AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(3,1)), X_cpu)
+            @test gradfd ≈ grad atol=1e-4 rtol=1e-4
+        end
+    end
+end
 
 @testset "AD rules - Luksan" begin
     cpu_models, names = create_luksan_models(CPU())
