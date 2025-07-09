@@ -4,9 +4,7 @@
 Compute all constraint and variable violations for a batch of solutions.
 """
 function all_violations!(bm::BatchModel, X::AbstractMatrix)
-    V = constraints!(bm, X)
-
-    Vc = constraint_violations!(bm, V)
+    Vc = constraint_violations!(bm, X)
     Vb = bound_violations!(bm, X)
 
     return Vc, Vb
@@ -18,9 +16,7 @@ end
 Compute all constraint and variable violations for a batch of solutions and parameters.
 """
 function all_violations!(bm::BatchModel, X::AbstractMatrix, Θ::AbstractMatrix)
-    V = constraints!(bm, X, Θ)
-
-    Vc = constraint_violations!(bm, V)
+    Vc = constraint_violations!(bm, X, Θ)
     Vb = bound_violations!(bm, X)
 
     return Vc, Vb
