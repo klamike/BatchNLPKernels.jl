@@ -95,7 +95,7 @@ function test_batch_model(model::ExaModel, batch_size::Int;
 
         @testset "Hessian" begin
             if ncon > 0
-                hess_vals = BNK.objective_hessian!(bm, X, Θ)
+                hess_vals = BNK.lagrangian_hessian!(bm, X, Θ)
                 @test size(hess_vals) == (nnzh, batch_size)
                 @test all(isfinite, hess_vals)
                 for i in 1:batch_size
