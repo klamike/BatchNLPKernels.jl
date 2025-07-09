@@ -57,8 +57,8 @@ function ChainRulesCore.rrule(::typeof(BatchNLPKernels.constraints!), bm::BatchM
 end
 
 
-function ChainRulesCore.rrule(::typeof(BatchNLPKernels.constraint_violations!), bm::BatchModel, V)
-    Vc = BatchNLPKernels.constraint_violations!(bm, V)
+function ChainRulesCore.rrule(::typeof(BatchNLPKernels._constraint_violations!), bm::BatchModel, V)
+    Vc = BatchNLPKernels._constraint_violations!(bm, V)
     
     function constraint_violations_pullback(Ȳ)
         Ȳ = ChainRulesCore.unthunk(Ȳ)
