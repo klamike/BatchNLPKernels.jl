@@ -207,8 +207,8 @@ function create_parametric_ac_power_model(filename::String = "pglib_opf_case14_i
     pg = variable(c, length(data.gen); lvar = data.pmin, uvar = data.pmax)
     qg = variable(c, length(data.gen); lvar = data.qmin, uvar = data.qmax)
 
-    pd = parameter(c, [b.pd for b in data.bus])
-    qd = parameter(c, [b.qd for b in data.bus])
+    @allowscalar pd = parameter(c, [b.pd for b in data.bus])
+    @allowscalar qd = parameter(c, [b.qd for b in data.bus])
 
     p = variable(c, length(data.arc); lvar = -data.rate_a, uvar = data.rate_a)
     q = variable(c, length(data.arc); lvar = -data.rate_a, uvar = data.rate_a)

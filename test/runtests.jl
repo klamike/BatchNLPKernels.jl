@@ -14,6 +14,15 @@ using PGLib
 using LinearAlgebra
 
 using OpenCL, pocl_jll, AcceleratedKernels
+
+using Lux
+using LuxCUDA
+using Lux.Training
+using MLUtils
+using Optimisers
+using CUDA
+using Random
+
 ExaModels.convert_array(x, ::OpenCLBackend) = CLArray(x)
 ExaModels.sort!(array::CLArray; lt = isless) = AcceleratedKernels.sort!(array; lt=lt)
 function Base.findall(f::F, bitarray::CLArray) where {F<:Function}
