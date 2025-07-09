@@ -17,6 +17,8 @@ BNKJuMP = "JuMP"
 
 [compat]
 ExaModels = "0.8.3"
+Lux = "1.15.0"
+LuxCUDA = "0.3.3"
 
 [extras]
 AcceleratedKernels = "6a4ca0a5-0e36-4168-a932-d9be78d558f1"
@@ -31,6 +33,8 @@ PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 pocl_jll = "627d6b7a-bbe6-5189-83e7-98cc0a5aeadd"
+Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
+LuxCUDA = "d0bbae9a-e099-4d5b-a835-1c6931763bda"
 
 [targets]
-test = ["Test", "CUDA", "GPUArraysCore", "LinearAlgebra", "OpenCL", "pocl_jll", "AcceleratedKernels", "DifferentiationInterface", "FiniteDifferences", "Zygote", "PGLib", "PowerModels"]
+test = ["Test", "CUDA", "GPUArraysCore", "LinearAlgebra", "OpenCL", "pocl_jll", "AcceleratedKernels", "DifferentiationInterface", "FiniteDifferences", "Zygote", "PGLib", "PowerModels", "Lux", "LuxCUDA"]

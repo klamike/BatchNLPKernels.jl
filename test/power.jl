@@ -188,7 +188,121 @@ function create_ac_power_model(
     return ExaModel(c; prod = prod)
 end
 
-# TODO: parametric version
+# Parametric version
+
+function c_active_power_balance_demand_polar_nodemand(b, vm)
+    return + b.gs * vm^2
+end
+
+function c_reactive_power_balance_demand_polar_nodemand(b, vm)
+    return - b.bs * vm^2
+end
+
+function build_polar_opf_demand_parametric(data; backend = nothing, T=Float64, kwargs...)
+    core = ExaCore(T; backend = backend)
+
+    va = variable(core, length(data.bus);)
+    vm = variable(
+            core,
+            length(data.bus);
+            start = fill!(similar(data.bus, Float64), 1.0),
+            lvar = data.vmin,
+            uvar = data.vmax,
+        )
+
+    pg = variable(core, length(data.gen); lvar = data.pmin, uvar = data.pmax)
+    qg = variable(core, length(data.gen); lvar = data.qmin, uvar = data.qmax)
+
+    pd = parameter(core, [b.pd for b in data.bus])
+    qd = parameter(core, [b.qd for b in data.bus])
+
+    p = variable(core, length(data.arc); lvar = -data.rate_a, uvar = data.rate_a)
+    q = variable(core, length(data.arc); lvar = -data.rate_a, uvar = data.rate_a)
+
+    o = objective(
+        core, gen_cost(g, pg[g.i]) for g in data.gen)
+
+    c_ref_angle = constraint(core, c_ref_angle_polar(va[i]) for i in data.ref_buses)
+
+    c_to_active_power_flow = constraint(core, c_to_active_power_flow_polar(b, p[b.f_idx],
+        vm[b.f_bus],vm[b.t_bus],va[b.f_bus],va[b.t_bus]) for b in data.branch)
+
+    c_to_reactive_power_flow = constraint(core, c_to_reactive_power_flow_polar(b, q[b.f_idx],
+        vm[b.f_bus],vm[b.t_bus],va[b.f_bus],va[b.t_bus]) for b in data.branch)
+
+    c_from_active_power_flow = constraint(core, c_from_active_power_flow_polar(b, p[b.t_idx],
+        vm[b.f_bus],vm[b.t_bus],va[b.f_bus],va[b.t_bus]) for b in data.branch)
+
+    c_from_reactive_power_flow = constraint(core, c_from_reactive_power_flow_polar(b, q[b.t_idx],
+        vm[b.f_bus],vm[b.t_bus],va[b.f_bus],va[b.t_bus]) for b in data.branch)
+
+    c_phase_angle_diff = constraint(
+        core,
+        c_phase_angle_diff_polar(b,va[b.f_bus],va[b.t_bus]) for b in data.branch;
+        lcon = data.angmin,
+        ucon = data.angmax,
+    )
+
+    c_active_power_balance = constraint(core, pd[b.i] + c_active_power_balance_demand_polar_nodemand(b, vm[b.i]) for b in data.bus)
+
+    c_reactive_power_balance = constraint(core, qd[b.i] + c_reactive_power_balance_demand_polar_nodemand(b, vm[b.i]) for b in data.bus)
+
+    c_active_power_balance_arcs = constraint!(core, c_active_power_balance, a.bus => p[a.i] for a in data.arc)
+    c_reactive_power_balance_arcs = constraint!(core, c_reactive_power_balance, a.bus => q[a.i] for a in data.arc)
+
+    c_active_power_balance_gen = constraint!(core, c_active_power_balance, g.bus => -pg[g.i] for g in data.gen)
+    c_reactive_power_balance_gen = constraint!(core, c_reactive_power_balance, g.bus => -qg[g.i] for g in data.gen)
+
+    c_from_thermal_limit = constraint(
+        core, c_thermal_limit(b,p[b.f_idx],q[b.f_idx]) for b in data.branch;
+        lcon = fill!(similar(data.branch, Float64, length(data.branch)), -Inf),
+        )
+
+    c_to_thermal_limit = constraint(
+        core, c_thermal_limit(b,p[b.t_idx],q[b.t_idx])
+        for b in data.branch;
+        lcon = fill!(similar(data.branch, Float64, length(data.branch)), -Inf),
+    )
+
+    model =ExaModel(core; kwargs...)
+    
+    vars = (
+            va = va,
+            vm = vm,
+            pg = pg,
+            qg = qg,
+            p = p,        
+            q = q
+        )
+
+    cons = (
+        c_ref_angle = c_ref_angle,
+        c_to_active_power_flow = c_to_active_power_flow,
+        c_to_reactive_power_flow = c_to_reactive_power_flow,
+        c_from_active_power_flow = c_from_active_power_flow,
+        c_from_reactive_power_flow = c_from_reactive_power_flow,
+        c_phase_angle_diff = c_phase_angle_diff,
+        c_active_power_balance = c_active_power_balance,
+        c_reactive_power_balance = c_reactive_power_balance,
+        c_from_thermal_limit = c_from_thermal_limit,
+        c_to_thermal_limit = c_to_thermal_limit
+    )
+
+    return model, vars, cons, (pd=pd, qd=qd)
+end
+
+function create_parametric_ac_power_model(
+    filename;
+    backend = OpenCLBackend(),
+    T = Float64,
+    kwargs...,
+)
+
+    data, _ = parse_ac_power_data(filename)
+    data = convert_data(data, backend)
+
+    return build_polar_opf_demand_parametric(data, backend = backend, T=T, kwargs...)
+end
 
 function create_power_models(backend = OpenCLBackend())
     models = ExaModel[]
