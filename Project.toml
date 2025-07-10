@@ -17,8 +17,6 @@ BNKJuMP = "JuMP"
 
 [compat]
 ExaModels = "0.8.3"
-Lux = "1.15.0"
-LuxCUDA = "0.3.3"
 
 [extras]
 AcceleratedKernels = "6a4ca0a5-0e36-4168-a932-d9be78d558f1"
