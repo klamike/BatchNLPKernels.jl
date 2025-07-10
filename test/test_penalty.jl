@@ -30,8 +30,9 @@ function test_penalty_training(; filename="pglib_opf_case14_ieee.m", dev_gpu = g
     batch_size = 32,
     dataset_size = 3200,
     rng = Random.default_rng(),
+    T = Float64,
 )
-    model = create_parametric_ac_power_model(filename; backend = backend)
+    model = create_parametric_ac_power_model(filename; backend = backend, T=T)
     bm = BNK.BatchModel(model, batch_size, config=BNK.BatchModelConfig(:full))
     bm_all = BNK.BatchModel(model, dataset_size, config=BNK.BatchModelConfig(:full))
 
@@ -48,7 +49,7 @@ function test_penalty_training(; filename="pglib_opf_case14_ieee.m", dev_gpu = g
     ncon = model.meta.ncon
     nθ = length(model.θ)
 
-    Θ_train = randn(nθ, dataset_size) |> dev_gpu
+    Θ_train = randn(T, nθ, dataset_size) |> dev_gpu
 
     lux_model = feed_forward_builder(nθ, nvar, [320, 320])
 
@@ -89,11 +90,11 @@ function test_penalty_training(; filename="pglib_opf_case14_ieee.m", dev_gpu = g
 end
 
 @testset "Penalty Training" begin
-    backend = if haskey(ENV, "BNK_TEST_CUDA")
-        CUDABackend()
+    backend, dev = if haskey(ENV, "BNK_TEST_CUDA")
+        CUDABackend(), gpu_device()
     else
-        CPU()
+        CPU(), cpu_device()
     end
 
-    test_penalty_training(; filename="pglib_opf_case14_ieee.m", dev_gpu = gpu_device(), backend=backend)
+    test_penalty_training(; filename="pglib_opf_case14_ieee.m", dev_gpu = dev, backend=backend, T=Float32)
 end
