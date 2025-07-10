@@ -16,7 +16,7 @@ end
 
 _convert_array(data::N, backend) where {names,N<:NamedTuple{names}} =
     NamedTuple{names}(ExaModels.convert_array(d, backend) for d in data)
-function _parse_ac_data_raw(filename)
+function _parse_ac_data_raw(filename; T=Float64)
     ref = _build_power_ref(filename) # FIXME: only parse once
     arcdict    = Dict(a => k for (k, a) in enumerate(ref[:arcs]))
     busdict    = Dict(k => i for (i, (k, _)) in enumerate(ref[:bus]))
@@ -27,24 +27,24 @@ function _parse_ac_data_raw(filename)
             begin
                 loads   = [ref[:load][l]   for l in ref[:bus_loads][k]]
                 shunts  = [ref[:shunt][s]  for s in ref[:bus_shunts][k]]
-                pd  = sum(load["pd"]  for load  in loads;  init = 0.0)
-                qd  = sum(load["qd"]  for load  in loads;  init = 0.0)
-                gs  = sum(shunt["gs"] for shunt in shunts; init = 0.0)
-                bs  = sum(shunt["bs"] for shunt in shunts; init = 0.0)
+                pd  = T(sum(load["pd"]  for load  in loads;  init = 0.0))
+                qd  = T(sum(load["qd"]  for load  in loads;  init = 0.0))
+                gs  = T(sum(shunt["gs"] for shunt in shunts; init = 0.0))
+                bs  = T(sum(shunt["bs"] for shunt in shunts; init = 0.0))
                 (i = busdict[k], pd = pd, gs = gs, qd = qd, bs = bs)
             end for (k, _) in ref[:bus]
         ],
         gen = [
             (
                 i     = gendict[k],
-                cost1 = v["cost"][1],
-                cost2 = v["cost"][2],
-                cost3 = v["cost"][3],
+                cost1 = T(v["cost"][1]),
+                cost2 = T(v["cost"][2]),
+                cost3 = T(v["cost"][3]),
                 bus   = busdict[v["gen_bus"]],
             ) for (k, v) in ref[:gen]
         ],
         arc = [
-            (i = k, rate_a = ref[:branch][l]["rate_a"], bus = busdict[i]) for
+            (i = k, rate_a = T(ref[:branch][l]["rate_a"]), bus = busdict[i]) for
             (k, (l, i, _)) in enumerate(ref[:arcs])
         ],
         branch = [
@@ -67,34 +67,34 @@ function _parse_ac_data_raw(filename)
                     t_idx  = t_idx,
                     f_bus  = busdict[branch["f_bus"]],
                     t_bus  = busdict[branch["t_bus"]],
-                    c1     = (-g * tr - b * ti) / ttm,
-                    c2     = (-b * tr + g * ti) / ttm,
-                    c3     = (-g * tr + b * ti) / ttm,
-                    c4     = (-b * tr - g * ti) / ttm,
-                    c5     = (g + g_fr) / ttm,
-                    c6     = (b + b_fr) / ttm,
-                    c7     = (g + g_to),
-                    c8     = (b + b_to),
-                    rate_a_sq = branch["rate_a"]^2,
+                    c1     = T((-g * tr - b * ti) / ttm),
+                    c2     = T((-b * tr + g * ti) / ttm),
+                    c3     = T((-g * tr + b * ti) / ttm),
+                    c4     = T((-b * tr - g * ti) / ttm),
+                    c5     = T((g + g_fr) / ttm),
+                    c6     = T((b + b_fr) / ttm),
+                    c7     = T((g + g_to)),
+                    c8     = T((b + b_to)),
+                    rate_a_sq = T(branch["rate_a"]^2),
                 )
             end for (i, branch_raw) in ref[:branch]
         ],
         ref_buses = [busdict[i] for (i, _) in ref[:ref_buses]],
-        vmax      = [v["vmax"] for (_, v) in ref[:bus]],
-        vmin      = [v["vmin"] for (_, v) in ref[:bus]],
-        pmax      = [v["pmax"] for (_, v) in ref[:gen]],
-        pmin      = [v["pmin"] for (_, v) in ref[:gen]],
-        qmax      = [v["qmax"] for (_, v) in ref[:gen]],
-        qmin      = [v["qmin"] for (_, v) in ref[:gen]],
-        rate_a    = [ref[:branch][l]["rate_a"] for (l, _, _) in ref[:arcs]],
-        angmax    = [b["angmax"] for (_, b) in ref[:branch]],
-        angmin    = [b["angmin"] for (_, b) in ref[:branch]],
+        vmax      = [T(v["vmax"]) for (_, v) in ref[:bus]],
+        vmin      = [T(v["vmin"]) for (_, v) in ref[:bus]],
+        pmax      = [T(v["pmax"]) for (_, v) in ref[:gen]],
+        pmin      = [T(v["pmin"]) for (_, v) in ref[:gen]],
+        qmax      = [T(v["qmax"]) for (_, v) in ref[:gen]],
+        qmin      = [T(v["qmin"]) for (_, v) in ref[:gen]],
+        rate_a    = [T(ref[:branch][l]["rate_a"]) for (l, _, _) in ref[:arcs]],
+        angmax    = [T(b["angmax"]) for (_, b) in ref[:branch]],
+        angmin    = [T(b["angmin"]) for (_, b) in ref[:branch]],
     )
 end
 
 _parse_ac_data(filename) = _parse_ac_data_raw(filename)
-function _parse_ac_data(filename, backend)
-    _convert_array(_parse_ac_data_raw(filename), backend)
+function _parse_ac_data(filename, backend; T=Float64)
+    _convert_array(_parse_ac_data_raw(filename, T=T), backend)
 end
 
 function create_ac_power_model(
@@ -192,14 +192,14 @@ end
 
 function create_parametric_ac_power_model(filename::String = "pglib_opf_case14_ieee.m";
     prod::Bool = true, backend = OpenCLBackend(), T=Float64, kwargs...)
-    data = _parse_ac_data(filename, backend)
+    data = _parse_ac_data(filename, backend, T=T)
     c = ExaCore(T; backend = backend)
 
     va = variable(c, length(data.bus);)
     vm = variable(
             c,
             length(data.bus);
-            start = fill!(similar(data.bus, Float64), 1.0),
+            start = fill!(similar(data.bus, T), 1.0),
             lvar = data.vmin,
             uvar = data.vmax,
         )
@@ -282,9 +282,9 @@ function create_parametric_ac_power_model(filename::String = "pglib_opf_case14_i
     return ExaModel(c; prod = prod)
 end
 
-function create_power_models(backend = OpenCLBackend())
+function create_power_models(backend = OpenCLBackend(), T=Float64)
     models = ExaModel[]
-    push!(models, create_ac_power_model("pglib_opf_case14_ieee.m"; backend = backend))
+    push!(models, create_ac_power_model("pglib_opf_case14_ieee.m"; backend = backend, T=T))
     names  = ["AC-OPF – IEEE-14"]
     return models, names
 end 
