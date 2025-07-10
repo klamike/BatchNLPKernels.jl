@@ -284,7 +284,7 @@ end
 
 function create_power_models(backend = OpenCLBackend(), T=Float64)
     models = ExaModel[]
-    push!(models, create_ac_power_model("pglib_opf_case14_ieee.m"; backend = backend, T=T))
+    push!(models, create_ac_power_model("pglib_opf_case14_ieee.m"; backend = backend))
     names  = ["AC-OPF – IEEE-14"]
     return models, names
 end 
