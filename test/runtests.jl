@@ -14,6 +14,16 @@ using PGLib
 using LinearAlgebra
 
 using OpenCL, pocl_jll, AcceleratedKernels
+
+using Lux
+using LuxCUDA
+using Lux.Training
+using MLUtils
+using Optimisers
+using CUDA
+using Random
+import GPUArraysCore: @allowscalar
+
 ExaModels.convert_array(x, ::OpenCLBackend) = CLArray(x)
 ExaModels.sort!(array::CLArray; lt = isless) = AcceleratedKernels.sort!(array; lt=lt)
 function Base.findall(f::F, bitarray::CLArray) where {F<:Function}
@@ -24,10 +34,7 @@ function Base.findall(f::F, bitarray::CLArray) where {F<:Function}
 end
 Base.findall(bitarray::CLArray) = Base.findall(identity, bitarray)
 
-import GPUArraysCore: @allowscalar
-
 if haskey(ENV, "BNK_TEST_CUDA")
-    using CUDA
     @info "CUDA detected"
 end
 
@@ -38,3 +45,4 @@ include("test_viols.jl")
 include("test_diff.jl")
 include("api.jl")
 include("config.jl")
+include("test_penalty.jl")
