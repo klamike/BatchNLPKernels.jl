@@ -1,3 +1,5 @@
+## COV_EXCL_START
+
 @kernel function kerf_batch(Y, @Const(f), @Const(itr), @Const(X), @Const(Θ))
     I, batch_idx = @index(Global, NTuple)
     @inbounds Y[ExaModels.offset0(f, itr, I), batch_idx] = f.f(itr[I], view(X, :, batch_idx), view(Θ, :, batch_idx))
@@ -103,3 +105,5 @@ end
         end
     end
 end
+
+## COV_EXCL_STOP
