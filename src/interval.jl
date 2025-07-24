@@ -15,7 +15,6 @@ Base.broadcastable(s::Interval) = Ref(s)
 Base.isempty(s::Interval{VT}) where {VT} = isempty(s.l) || isempty(s.u)
 
 # empty support (unconstrained)
-Interval(::Nothing) = Interval()
 Interval() = Interval(nothing, nothing)
 Base.isempty(::Interval{Nothing}) = true
 @inline _violation(v, ::Interval{Nothing}) = zero(v)

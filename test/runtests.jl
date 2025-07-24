@@ -38,6 +38,13 @@ if haskey(ENV, "BNK_TEST_CUDA")
     @info "CUDA detected"
 end
 
+@testset "Empty Intervals" begin
+    empt = BNK.Interval()
+    @test isempty(empt)
+    @test isnothing(empt.l)
+    @test isnothing(empt.u)
+    @test BNK._violation([1.0, 2.0, 3.0], empt) == [0.0, 0.0, 0.0]
+end
 
 include("luksan.jl")
 include("power.jl")
