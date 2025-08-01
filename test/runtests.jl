@@ -24,15 +24,6 @@ using CUDA
 using Random
 import GPUArraysCore: @allowscalar
 
-ExaModels.convert_array(x, ::OpenCLBackend) = CLArray(x)
-ExaModels.sort!(array::CLArray; lt = isless) = AcceleratedKernels.sort!(array; lt=lt)
-function Base.findall(f::F, bitarray::CLArray) where {F<:Function}
-    a = Array(bitarray)
-    b = findall(f, a)
-    c = similar(bitarray, eltype(b), length(b))
-    return copyto!(c, b)
-end
-Base.findall(bitarray::CLArray) = Base.findall(identity, bitarray)
 
 if haskey(ENV, "BNK_TEST_CUDA")
     @info "CUDA detected"
